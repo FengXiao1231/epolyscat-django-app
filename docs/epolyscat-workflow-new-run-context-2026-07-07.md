@@ -311,6 +311,21 @@ This document is intended to be committed separately as documentation.
 
 The following points still need confirmation or deeper testing:
 
+### Deferred Workflow Continuation Work
+
+The first continuation entry point is intentionally limited to View Run. After
+that path is validated with real completed Airavata runs, add:
+
+- A `Continue in Workflow` action in the Runs list for eligible completed runs.
+- An existing-run picker in New Workflow so a user can import a historical run
+  without opening View Run first.
+- A dedicated Visualization stage after Analysis, including explicit rules for
+  which analysis outputs are plottable.
+
+These entry points must reuse the backend run classifier and continuation API;
+the run-type and workflow-stage mapping should not be duplicated in frontend
+components.
+
 - Exact authoritative output file names for every module/utility on production Airavata runs.
 - Whether workflow parent rows should be visible in the main run list, child rows should be visible, or both with grouping.
 - Whether analysis should allow multiple utility selections in one workflow step, or one analysis utility per child run.
