@@ -1,0 +1,449 @@
+% ePolyScat project-acceptance poster
+% Compile with LuaLaTeX or XeLaTeX. The file is self-contained apart from the
+% two screenshots in docs/poster/assets/.
+\documentclass[final]{beamer}
+
+\usepackage[size=custom,width=122,height=91,scale=1.0]{beamerposter}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc,positioning,shapes.geometric}
+\usepackage[most]{tcolorbox}
+\usepackage{booktabs}
+\usepackage{ragged2e}
+\usepackage{microtype}
+\usepackage{amssymb}
+
+\graphicspath{{docs/poster/assets/}{assets/}}
+
+% ---------------------------------------------------------------------------
+% PARTNER-EDITABLE CONTENT
+% Replace only the eight definitions below. Keep each value concise enough
+% for its labeled box; no layout edits are needed.
+% ---------------------------------------------------------------------------
+\newcommand{\PartnerTitle}{[Partner Progress Title]}
+\newcommand{\PartnerClaim}{[One sentence: what changed, for whom, and why it matters.]}
+\newcommand{\PartnerMethod}{[Problem and method: summarize the approach in two or three concise points.]}
+\newcommand{\PartnerImplementation}{[Implementation or experimental contribution: name the system, artifact, or analysis delivered.]}
+\newcommand{\PartnerVisual}{\PartnerVisualPlaceholder}
+\newcommand{\PartnerVisualCaption}{[One sentence explaining what the visual proves.]}
+\newcommand{\PartnerValidation}{[Tests, measurements, comparison, or user evidence supporting the claim.]}
+\newcommand{\PartnerMetrics}{[Two to four defensible outcome metrics, separated by centered dots.]}
+
+% ---------------------------------------------------------------------------
+% VISUAL SYSTEM
+% ---------------------------------------------------------------------------
+\definecolor{PosterNavy}{HTML}{0D3B52}
+\definecolor{PosterNavyDark}{HTML}{082938}
+\definecolor{PosterTeal}{HTML}{14866D}
+\definecolor{PosterTealDark}{HTML}{0D6452}
+\definecolor{PosterAmber}{HTML}{F3A712}
+\definecolor{PosterPaper}{HTML}{FBFAF5}
+\definecolor{PosterBlueTint}{HTML}{E5EFFA}
+\definecolor{PosterGreenTint}{HTML}{DFF3ED}
+\definecolor{PosterPurpleTint}{HTML}{F3EAFA}
+\definecolor{PosterAmberTint}{HTML}{FFF3D6}
+\definecolor{PosterLine}{HTML}{CAD7DC}
+\definecolor{PosterGray}{HTML}{53636A}
+\definecolor{PosterInk}{HTML}{14272F}
+
+\setbeamercolor{background canvas}{bg=PosterPaper}
+\setbeamercolor{normal text}{fg=PosterInk,bg=PosterPaper}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize item}{\raise0.15ex\hbox{\color{PosterTeal}\large\textbullet}}
+\setbeamertemplate{itemize subitem}{\raise0.15ex\hbox{\color{PosterAmber}\normalsize\textbullet}}
+\setlength{\leftmargini}{1.05cm}
+\setlength{\leftmarginii}{0.8cm}
+
+\newcommand{\PanelKicker}[1]{%
+  {\fontsize{20}{23}\selectfont\bfseries\color{PosterAmber}\MakeUppercase{#1}}}
+
+\newcommand{\PanelTitle}[1]{%
+  {\fontsize{38}{42}\selectfont\bfseries\color{white}#1}}
+
+\newcommand{\BoxHeading}[1]{%
+  {\fontsize{22}{25}\selectfont\bfseries\color{PosterNavy}#1}\par\vspace{0.25cm}}
+
+\newcommand{\SmallCaps}[1]{%
+  {\fontsize{15}{18}\selectfont\bfseries\color{PosterTealDark}\MakeUppercase{#1}}}
+
+\newcommand{\PosterCaption}[1]{%
+  \par\vspace{0.3cm}{\fontsize{15}{18}\selectfont\color{PosterGray}#1}\par}
+
+\newcommand{\CheckLine}[1]{%
+  \noindent\tikz[baseline=-0.55ex]{\fill[PosterTeal] (0,0) circle (0.18);\draw[white,line width=0.08cm] (-0.09,0) -- (-0.015,-0.08) -- (0.11,0.09);}%
+  \hspace{0.28cm}#1\par\vspace{0.25cm}}
+
+\newtcolorbox{contentbox}[2][]{
+  enhanced,
+  colback=white,
+  colframe=PosterLine,
+  boxrule=0.06cm,
+  arc=0.35cm,
+  left=0.65cm,right=0.65cm,top=0.55cm,bottom=0.52cm,
+  fontupper=\fontsize{18}{22}\selectfont,
+  title={#2},
+  colbacktitle=white,
+  coltitle=PosterNavy,
+  fonttitle=\fontsize{21}{24}\selectfont\bfseries,
+  attach boxed title to top left={xshift=0.42cm,yshift=-0.35cm},
+  boxed title style={boxrule=0pt,arc=0pt,left=0.18cm,right=0.18cm,top=0.05cm,bottom=0.05cm},
+  before skip=0pt,after skip=0pt,
+  #1
+}
+
+\newtcolorbox{claimbox}[1][]{
+  enhanced,
+  colback=PosterAmberTint,
+  colframe=PosterAmber,
+  boxrule=0.07cm,
+  borderline west={0.32cm}{0pt}{PosterAmber},
+  arc=0.3cm,
+  left=0.8cm,right=0.7cm,top=0.55cm,bottom=0.52cm,
+  fontupper=\fontsize{19}{23}\selectfont\bfseries\color{PosterNavy},
+  #1
+}
+
+\newcommand{\ScreenshotFrame}[1]{%
+  \begin{tikzpicture}
+    \node[inner sep=0pt,rounded corners=0.3cm,draw=PosterLine,line width=0.08cm] (shot)
+      {\includegraphics[width=25.2cm,height=11.9cm,keepaspectratio]{#1}};
+  \end{tikzpicture}}
+
+\newcommand{\PartnerVisualPlaceholder}{%
+  \begin{tikzpicture}
+    \node[
+      minimum width=0.94\linewidth,
+      minimum height=9.8cm,
+      align=center,
+      rounded corners=0.45cm,
+      draw=PosterTeal,
+      dashed,
+      line width=0.08cm,
+      fill=PosterGreenTint,
+      text=PosterTealDark,
+      font=\fontsize{22}{27}\selectfont\bfseries
+    ] {PRIMARY RESULT FIGURE\\[0.35cm]
+       \fontsize{16}{20}\selectfont\normalfont Replace \texttt{\string\PartnerVisual} with\\
+       \texttt{\string\includegraphics[width=\string\linewidth]\{...\}}};
+  \end{tikzpicture}}
+
+\newcommand{\StageNode}[5][]{%
+  \node[
+    #1,
+    minimum width=11.25cm,
+    minimum height=3.0cm,
+    rounded corners=0.35cm,
+    fill=#4,
+    text=#5,
+    align=center,
+    inner sep=0.2cm,
+    font=\fontsize{14}{17}\selectfont\bfseries
+  ] (#2) {#3};}
+
+\newcommand{\TinyEvidence}[4][5.0cm]{%
+  \begin{tcolorbox}[
+    enhanced,colback=#2,colframe=PosterLine,boxrule=0.045cm,arc=0.28cm,
+    left=0.38cm,right=0.38cm,top=0.3cm,bottom=0.3cm,
+    height=#1,valign=center,halign=center
+  ]
+    {\fontsize{24}{27}\selectfont\bfseries\color{PosterNavy}#3}\par
+    \vspace{0.15cm}{\fontsize{13}{16}\selectfont\color{PosterGray}#4}
+  \end{tcolorbox}}
+
+\begin{document}
+\begin{frame}[t]
+  \vspace{-1.0cm}
+
+  % -------------------------------------------------------------------------
+  % SHARED HEADER
+  % -------------------------------------------------------------------------
+  \begin{tikzpicture}[remember picture,overlay]
+    \fill[PosterNavy] (current page.north west) rectangle ([yshift=-15.6cm]current page.north east);
+    \fill[PosterTeal] ([yshift=-15.6cm]current page.north west) rectangle ([yshift=-15.95cm]current page.north east);
+    \fill[PosterAmber] ([xshift=111.5cm,yshift=-1.2cm]current page.north west)
+      -- ([xshift=122cm,yshift=-1.2cm]current page.north west)
+      -- ([xshift=122cm,yshift=-9.6cm]current page.north west) -- cycle;
+  \end{tikzpicture}
+
+  \begin{minipage}[t][13.7cm][t]{\textwidth}
+    \vspace{3.0cm}
+    \begin{columns}[T,totalwidth=\textwidth]
+      \begin{column}{0.765\textwidth}
+        {\fontsize{18}{22}\selectfont\bfseries\color{PosterAmber}\MakeUppercase{Evidence-led scientific gateway}}\par
+        \vspace{0.35cm}
+        {\fontsize{62}{66}\selectfont\bfseries\color{white}
+          An Evidence-Driven ePolyScat Research Portal}\par
+        \vspace{0.35cm}
+        {\fontsize{28}{33}\selectfont\color{PosterGreenTint}
+          End-to-End Scientific Workflows, Reproducible Inputs, and Verified Computation}\par
+        \vspace{0.75cm}
+        {\fontsize{22}{26}\selectfont\bfseries\color{white}
+          Ziming Zhang \hspace{0.35cm}\textcolor{PosterAmber}{\textbullet}\hspace{0.35cm}
+          Nguyen, Thinh M \hspace{0.55cm}|\hspace{0.55cm} Georgia Institute of Technology}
+      \end{column}
+      \begin{column}{0.205\textwidth}
+        \vspace{0.4cm}
+        \begin{tikzpicture}
+          \node[
+            fill=PosterTeal,
+            rounded corners=0.5cm,
+            minimum width=22.0cm,
+            minimum height=4.3cm,
+            align=center,
+            text=white,
+            font=\fontsize{19}{23}\selectfont\bfseries
+          ] {PROJECT ACCEPTANCE\\REVIEW};
+          \node[
+            below=0.45cm,
+            align=center,
+            text=PosterGreenTint,
+            font=\fontsize{16}{20}\selectfont
+          ] {July 2026\\Scientific Gateway Delivery};
+        \end{tikzpicture}
+      \end{column}
+    \end{columns}
+  \end{minipage}
+
+  \vspace{0.9cm}
+
+  % Shared objective and acceptance claim
+  \begin{columns}[T,totalwidth=\textwidth]
+    \begin{column}{0.49\textwidth}
+      \begin{tcolorbox}[
+        colback=white,colframe=PosterLine,boxrule=0.055cm,arc=0.3cm,
+        left=0.65cm,right=0.65cm,top=0.42cm,bottom=0.42cm,height=5.1cm,valign=center
+      ]
+        \SmallCaps{Project objective}\par\vspace{0.22cm}
+        {\fontsize{19}{23}\selectfont\bfseries\color{PosterNavy}
+          Turn fragmented scientific tools into a traceable, reviewable research workflow.}
+      \end{tcolorbox}
+    \end{column}
+    \begin{column}{0.49\textwidth}
+      \begin{tcolorbox}[
+        colback=PosterGreenTint,colframe=PosterTeal,boxrule=0.065cm,arc=0.3cm,
+        left=0.65cm,right=0.65cm,top=0.42cm,bottom=0.42cm,height=5.1cm,valign=center
+      ]
+        \SmallCaps{Acceptance claim}\par\vspace{0.22cm}
+        {\fontsize{19}{23}\selectfont\bfseries\color{PosterNavy}
+          Connect configuration, execution, scientific validation, and stage-to-stage handoff in one portal experience.}
+      \end{tcolorbox}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.7cm}
+
+  % -------------------------------------------------------------------------
+  % TWO EQUAL CONTRIBUTION PANELS
+  % -------------------------------------------------------------------------
+  \begin{columns}[T,totalwidth=\textwidth]
+    \begin{column}{0.49\textwidth}
+      \begin{tcolorbox}[
+        enhanced,colback=PosterNavy,colframe=PosterNavy,boxrule=0pt,arc=0.4cm,
+        left=0.75cm,right=0.75cm,top=0.5cm,bottom=0.48cm,height=4.35cm,valign=center
+      ]
+        \PanelKicker{Contribution A · Ziming Zhang}\par\vspace{0.12cm}
+        \PanelTitle{Workflow Portal and Scientific Verification}
+      \end{tcolorbox}
+
+      \vspace{0.45cm}
+      \begin{claimbox}[height=4.35cm,valign=center]
+        The implemented portal now exposes a usable, reviewable path from scientific input to verified HPC output and the next workflow stage.
+      \end{claimbox}
+
+      \vspace{0.45cm}
+      \begin{contentbox}[height=5.25cm]{Four-stage research journey}
+        \vspace{0.25cm}
+        \centering
+        \begin{tikzpicture}[node distance=0.65cm]
+          \StageNode{generate}{1\\Data Generation}{PosterTeal}{white}
+          \StageNode[right=0.65cm of generate]{scatter}{2\\ePolyScat Run}{PosterTeal}{white}
+          \StageNode[right=0.65cm of scatter]{post}{3\\Post-processing}{PosterTeal}{white}
+          \StageNode[right=0.65cm of post]{visual}{4\\Visualization}{PosterNavy}{white}
+          \draw[-{Latex[length=0.42cm]},line width=0.1cm,color=PosterAmber]
+            (generate.east) -- (scatter.west);
+          \draw[-{Latex[length=0.42cm]},line width=0.1cm,color=PosterAmber]
+            (scatter.east) -- (post.west);
+          \draw[-{Latex[length=0.42cm]},line width=0.1cm,color=PosterAmber]
+            (post.east) -- (visual.west);
+          \node[below=0.18cm of scatter.south east,anchor=north east,text=PosterGray,
+            font=\fontsize{11}{13}\selectfont] {remote computation};
+          \node[below=0.18cm of visual.south,text=PosterGray,
+            font=\fontsize{11}{13}\selectfont] {local presentation};
+        \end{tikzpicture}
+      \end{contentbox}
+
+      \vspace{0.45cm}
+      \begin{contentbox}[height=16.6cm]{Portal evidence}
+        \centering
+        \ScreenshotFrame{workflow-new-run.png}\hfill
+        \ScreenshotFrame{workflow-evidence.png}
+        \PosterCaption{Left: guided Workflow mode exposes all four stages and required-file readiness. Right: Portal Run 31 shows \textbf{Science Verified}, output artifacts, and the continuation contract for Visualization \& Analysis.}
+      \end{contentbox}
+
+      \vspace{0.45cm}
+      \begin{columns}[T,totalwidth=\linewidth]
+        \begin{column}{0.49\linewidth}
+          \begin{contentbox}[height=11.25cm]{Reproducible inputs}
+            \CheckLine{File View and Table View stay synchronized.}
+            \CheckLine{An ordered, lossless document model preserves repeated records, commands, comments, blank lines, and unknown input.}
+            \CheckLine{Ordered Sequence editing never replaces source text with generated defaults.}
+          \end{contentbox}
+        \end{column}
+        \begin{column}{0.49\linewidth}
+          \begin{contentbox}[height=11.25cm]{Verified execution contracts}
+            \CheckLine{Output manifests carry semantic roles and provenance.}
+            \CheckLine{Continuation requires scientific evidence—not scheduler completion alone.}
+            \CheckLine{Resource-aware wrappers propagate failure and verify application-specific completion markers.}
+          \end{contentbox}
+        \end{column}
+      \end{columns}
+
+      \vspace{0.45cm}
+      \begin{contentbox}[height=7.35cm]{System path: one reviewable chain}
+        \centering\vspace{0.2cm}
+        \begin{tikzpicture}[node distance=0.45cm]
+          \tikzset{arch/.style={minimum width=8.55cm,minimum height=2.65cm,
+            rounded corners=0.3cm,align=center,inner sep=0.15cm,
+            font=\fontsize{12}{14}\selectfont\bfseries,text=PosterNavy,draw=PosterLine,line width=0.045cm}}
+          \node[arch,fill=PosterBlueTint] (portal) {Vue Portal\\configuration};
+          \node[arch,fill=PosterGreenTint,right=of portal] (django) {Django\\orchestration};
+          \node[arch,fill=PosterPurpleTint,right=of django] (airavata) {Airavata gRPC\\submission};
+          \node[arch,fill=PosterAmberTint,right=of airavata] (hpc) {HPC wrappers\\Frontera · Stampede3 · Expanse};
+          \node[arch,fill=PosterGreenTint,right=of hpc] (verify) {Scientific proof\\+ provenance};
+          \node[arch,fill=PosterBlueTint,right=of verify] (handoff) {Compatible output\\handoff};
+          \foreach \a/\b in {portal/django,django/airavata,airavata/hpc,hpc/verify,verify/handoff}
+            \draw[-{Latex[length=0.35cm]},line width=0.075cm,color=PosterTeal] (\a.east)--(\b.west);
+        \end{tikzpicture}
+        \par\vspace{0.35cm}
+        {\fontsize{14}{17}\selectfont\color{PosterGray}
+          Every transition remains visible before submission and auditable after completion.}
+      \end{contentbox}
+
+      \vspace{0.45cm}
+      \begin{contentbox}[height=9.5cm]{Acceptance evidence}
+        \begin{columns}[T,totalwidth=\linewidth]
+          \begin{column}{0.32\linewidth}
+            \TinyEvidence{PosterGreenTint}{296}{non-gRPC automated checks passed}
+          \end{column}
+          \begin{column}{0.32\linewidth}
+            \TinyEvidence{PosterAmberTint}{3 / 3}{HPC wrapper regression suites passed}
+          \end{column}
+          \begin{column}{0.32\linewidth}
+            \TinyEvidence{PosterBlueTint}{34 · 67 · 24.9k}{implementation commits · changed files · lines added}
+          \end{column}
+        \end{columns}
+        \vspace{0.35cm}
+        {\fontsize{14}{17}\selectfont\color{PosterGray}
+          \textbf{Portal evidence:} Run 23 / Expanse verified OpenMolcas and inherited \texttt{.scf.molden}; Run 31 / Frontera verified ePolyScat and produced \texttt{test01Blms.dat}.\\
+          \textbf{Remote evidence:} Frontera job 7861631 and Stampede3 jobs 3316916 / 3316918 completed with application-specific EDCS or OpenMolcas success markers. Vue production build also passed.}
+      \end{contentbox}
+    \end{column}
+
+    % -----------------------------------------------------------------------
+    % PARTNER CONTRIBUTION — equal-width, macro-driven replacement structure
+    % -----------------------------------------------------------------------
+    \begin{column}{0.49\textwidth}
+      \begin{tcolorbox}[
+        enhanced,colback=PosterNavy,colframe=PosterNavy,boxrule=0pt,arc=0.4cm,
+        left=0.75cm,right=0.75cm,top=0.5cm,bottom=0.48cm,height=4.35cm,valign=center
+      ]
+        \PanelKicker{Contribution B · Nguyen, Thinh M}\par\vspace{0.12cm}
+        \PanelTitle{\PartnerTitle}
+      \end{tcolorbox}
+
+      \vspace{0.45cm}
+      \begin{claimbox}[height=4.35cm,valign=center]
+        \PartnerClaim
+      \end{claimbox}
+
+      \vspace{0.45cm}
+      \begin{columns}[T,totalwidth=\linewidth]
+        \begin{column}{0.49\linewidth}
+          \begin{contentbox}[height=9.0cm]{Problem \& method}
+            \PartnerMethod
+          \end{contentbox}
+        \end{column}
+        \begin{column}{0.49\linewidth}
+          \begin{contentbox}[height=9.0cm]{Implementation}
+            \PartnerImplementation
+          \end{contentbox}
+        \end{column}
+      \end{columns}
+
+      \vspace{0.45cm}
+      \begin{contentbox}[height=15.0cm]{Primary result}
+        \centering
+        \PartnerVisual
+        \PosterCaption{\PartnerVisualCaption}
+      \end{contentbox}
+
+      \vspace{0.45cm}
+      \begin{contentbox}[height=7.0cm]{Validation evidence}
+        \begin{tikzpicture}[baseline=-0.5ex]
+          \node[circle,fill=PosterTeal,minimum size=1.25cm,text=white,
+            font=\fontsize{16}{18}\selectfont\bfseries] {\checkmark};
+        \end{tikzpicture}\hspace{0.45cm}
+        \begin{minipage}[t]{0.89\linewidth}
+          \PartnerValidation
+        \end{minipage}
+      \end{contentbox}
+
+      \vspace{0.45cm}
+      \begin{contentbox}[height=7.0cm]{Outcome metrics}
+        \begin{tcolorbox}[
+          colback=PosterBlueTint,colframe=PosterLine,boxrule=0.05cm,arc=0.28cm,
+          left=0.7cm,right=0.7cm,top=0.55cm,bottom=0.55cm,height=4.25cm,valign=center,halign=center
+        ]
+          {\fontsize{24}{29}\selectfont\bfseries\color{PosterNavy}\PartnerMetrics}
+        \end{tcolorbox}
+      \end{contentbox}
+
+      \vspace{0.45cm}
+      \begin{contentbox}[height=6.1cm]{How this contribution fits the shared objective}
+        \vspace{0.15cm}
+        \begin{columns}[T,totalwidth=\linewidth]
+          \begin{column}{0.32\linewidth}
+            \TinyEvidence[3.2cm]{PosterBlueTint}{01}{Traceable configuration}
+          \end{column}
+          \begin{column}{0.32\linewidth}
+            \TinyEvidence[3.2cm]{PosterGreenTint}{02}{Verified computation}
+          \end{column}
+          \begin{column}{0.32\linewidth}
+            \TinyEvidence[3.2cm]{PosterAmberTint}{03}{Reviewable research output}
+          \end{column}
+        \end{columns}
+      \end{contentbox}
+
+      \vspace{0.45cm}
+      \begin{tcolorbox}[
+        enhanced,colback=PosterPurpleTint,colframe=PosterLine,boxrule=0.05cm,arc=0.3cm,
+        left=0.65cm,right=0.65cm,top=0.3cm,bottom=0.3cm,height=3.0cm,valign=center
+      ]
+        \SmallCaps{Replacement guide}\hspace{0.35cm}
+        {\fontsize{14}{17}\selectfont\color{PosterGray}
+          Edit the eight \texttt{\string\Partner...} macros near the top; every labeled area updates automatically.}
+      \end{tcolorbox}
+    \end{column}
+  \end{columns}
+
+  \vfill
+
+  % -------------------------------------------------------------------------
+  % SHARED FOOTER
+  % -------------------------------------------------------------------------
+  \begin{tikzpicture}[remember picture,overlay]
+    \fill[PosterNavyDark] (current page.south west) rectangle ([yshift=3.15cm]current page.south east);
+  \end{tikzpicture}
+  \begin{minipage}[c][2.1cm][c]{\textwidth}
+    {\fontsize{18}{22}\selectfont\color{white}
+      \textbf{Shared stack:} Vue 2 · Django · Airavata gRPC · HPC}
+    \hfill
+    {\fontsize{18}{22}\selectfont\bfseries\color{PosterGreenTint}
+      Project Acceptance Review · July 2026}
+    \hfill
+    {\fontsize{18}{22}\selectfont\color{white}
+      Georgia Institute of Technology}
+  \end{minipage}
+\end{frame}
+\end{document}
