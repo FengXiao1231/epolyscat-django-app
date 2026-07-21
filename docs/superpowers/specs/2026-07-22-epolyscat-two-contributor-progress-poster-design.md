@@ -295,3 +295,23 @@ than shrinking screenshots:
 Contribution B remains the same width and keeps all eight replacement macros.
 No changes to partner content ownership or the shared visual system are part of
 this revision.
+
+## Approved Evidence-Containment Revision
+
+The full portal captures must sit completely inside their tinted evidence
+cards. The July 22 review found that the lower edge of each portal capture sat
+slightly beyond the intended inner frame. The final geometry therefore uses the
+following adjustment without shrinking or cropping the images:
+
+- Increase every evidence tile from 14.3 cm to approximately 14.7 cm.
+- Increase the two-row Evidence Narrative container by the corresponding total
+  amount so both rows keep equal height and padding.
+- Recover that height by reducing the Engineering Decisions / Scientific Value
+  row from 6.3 cm to approximately 5.0 cm.
+- Increase Engineering Decisions body type from 13.4 pt to approximately
+  14.8 pt, using tighter bullet spacing rather than smaller type.
+- Increase Scientific Value body type slightly while retaining its complete
+  approved sentence.
+
+No evidence image may gain `trim` or `clip` options. Contribution B and the
+remaining acceptance sections remain unchanged.
