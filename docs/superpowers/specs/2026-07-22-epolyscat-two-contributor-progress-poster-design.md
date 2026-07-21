@@ -82,15 +82,18 @@ The first three stages represent the remote computational chain; Visualization i
 
 ### Primary Visuals
 
-- Main screenshot: the current local New Run Workflow interface showing the four-stage flow and configured required inputs.
-- Secondary screenshot: the current View Run scientific verification/continuation surface or the Ordered Sequence editor, selected according to which authenticated local page renders reliably.
+- Four-stage Workflow screenshot showing the configured research journey.
+- Ordered Sequence / structured input screenshot demonstrating lossless editing.
+- View Run screenshot showing scientific verification, output provenance, and continuation.
+- Molecular-orbital or scientific-result screenshot demonstrating local interpretation.
 - Architecture diagram: a native TikZ flow from Portal to Django to Airavata gRPC to HPC execution to Scientific Verification and Provenance-Aware Handoff.
 
 If live authenticated data prevents a useful capture, the poster uses the repository's existing browser screenshots as a fallback and labels their represented behavior precisely.
 
-### Evidence Cards
+### Validation Evidence Sources
 
-The final poster will select concise evidence from the newest reproducible sources:
+The following detailed records support the concise visible metrics and remain
+available for oral defense:
 
 - Current branch delta against `origin/main`: 34 commits, 67 changed files, 24,896 insertions, and 782 deletions at design time.
 - Fresh local automated test/build results collected during poster production, replacing older counts when a broader successful run is available.
@@ -99,7 +102,10 @@ The final poster will select concise evidence from the newest reproducible sourc
 - Frontera job 7861631: four-task manual `test03`, `COMPLETED 0:0`, four `End EDCS` markers, final `Finalize`, and no `Abnormal Ending`.
 - Stampede3 jobs 3316916 and 3316918: verified ePolyScat EDCS completion and OpenMolcas `Happy landing` with Molden outputs.
 
-The evidence layout emphasizes the separation between scheduler state and scientific success without adding a risks or failure-summary panel.
+The visible validation block uses only the four approved headline metrics. The
+detailed records above are not printed as a job log. The layout still emphasizes
+the separation between scheduler state and scientific success without adding a
+risks or failure-summary panel.
 
 ## Contribution B: Nguyen, Thinh M
 
@@ -155,7 +161,7 @@ When evidence sources differ, the current code and a fresh reproducible check ta
 1. Capture screenshots at a consistent desktop viewport and crop them to the poster's image frames.
 2. Run a representative backend test suite, parser/contract tests, frontend production build, and wrapper regression tests in proportion to available local dependencies.
 3. Record only successful, reproducible counts in the poster.
-4. Compile the TeX source twice with LuaLaTeX.
+4. Compile the TeX source twice with Tectonic/XeTeX.
 5. Render the PDF to a high-resolution image and inspect it for clipping, text overflow, unreadable captions, raster blur, and unequal contributor weight.
 6. Check that replacing every partner macro with realistic text does not require layout changes.
 7. Run `git diff --check` and verify that no unrelated working-tree files are staged.
@@ -168,3 +174,88 @@ When evidence sources differ, the current code and a fresh reproducible check ta
 - Thinh's section is visually equal and editable exclusively through clearly named macros and one visual asset reference.
 - The poster contains no Remaining Risks, Next Steps, or References block.
 - All text remains readable at poster scale and no content crosses block boundaries.
+
+## Approved Evidence-Narrative Revision
+
+The July 22 review identified that two screenshots did not fully communicate the
+end-to-end research experience. Contribution A will therefore use a four-image,
+2-by-2 evidence narrative. Each image has one job and a short conclusion-led
+caption:
+
+1. **Configure** — show the complete four-stage workflow and explicit required
+   scientific inputs.
+2. **Preserve** — show the Ordered Sequence / structured input surface and the
+   lossless preservation of commands, comments, repeated records, and source
+   ordering.
+3. **Verify** — show a scientifically verified run, its output artifacts, and
+   the continuation contract.
+4. **Interpret** — show a real molecular-orbital or scientific-result
+   visualization produced from workflow output.
+
+The images are evidence tiles rather than four reduced full-page screenshots.
+They use consistent crops, numbered labels, and readable captions. The layout
+must not reduce the body type below the existing readable poster scale.
+
+### Key English Copy
+
+The shared research gap is:
+
+> Scientific workflows span specialized programs, remote schedulers, and local
+> analysis tools. Job completion alone does not prove that scientifically valid
+> outputs were produced or that the correct files reached the next stage.
+
+Ziming's key contribution is:
+
+> We transformed ePolyScat from a collection of disconnected tools into a
+> guided, inspectable workflow. Each stage preserves the researcher's original
+> input, records output provenance, and exposes a verified handoff to the next
+> calculation or visualization step.
+
+The engineering decisions remain concise and scannable:
+
+- Lossless ordered document model for reproducible ePolyScat inputs.
+- Semantic output roles instead of filename-only inference.
+- Resource-aware execution contracts across supported HPC systems.
+- Provenance-aware continuation with researcher review before submission.
+
+The scientific value statement is:
+
+> Researchers can reproduce exactly what was submitted, distinguish scheduler
+> artifacts from scientific results, and continue a calculation without
+> manually rebuilding file dependencies.
+
+The acceptance result is:
+
+> Portal configuration to HPC execution to scientific proof to
+> provenance-aware handoff to local visualization is operational and
+> demonstrated with real runs.
+
+### Concise Validation Block
+
+Validation remains high-level rather than reproducing a test log. Use four
+headline metrics:
+
+- `296` — Automated Checks Passed
+- `3` — HPC Platforms Validated
+- `2` — Scientifically Verified Runs
+- `4` — Operational Workflow Stages
+
+The only supporting line is:
+
+> Non-gRPC test coverage, HPC wrapper regressions, and the production build
+> passed successfully.
+
+Detailed job identifiers, EDCS marker counts, abnormal-ending counts, individual
+scientific filenames, and branch-size statistics are omitted from the visible
+validation block. They remain available as oral-defense evidence.
+
+### Layout Revision
+
+Contribution A becomes a balanced sequence of Research Gap, Key Contribution,
+four evidence tiles, Engineering Decisions, Scientific Value, Acceptance Result,
+and the concise four-metric validation block. Empty fixed-height cards are
+compressed so key copy can use a larger, more visible type size.
+
+Contribution B retains equal width and the same eight partner-editable macros.
+The placeholder structure remains visually complete and does not inherit
+Ziming-specific claims or metrics.
