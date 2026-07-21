@@ -1,6 +1,6 @@
 % ePolyScat project-acceptance poster
 % Compile with LuaLaTeX or XeLaTeX. The file is self-contained apart from the
-% two screenshots in docs/poster/assets/.
+% evidence images in docs/poster/assets/.
 \documentclass[final]{beamer}
 
 \usepackage[size=custom,width=122,height=91,scale=1.0]{beamerposter}
@@ -110,6 +110,31 @@
       {\includegraphics[width=25.2cm,height=11.9cm,keepaspectratio]{#1}};
   \end{tikzpicture}}
 
+\newcommand{\EvidenceTile}[5]{%
+  \begin{tcolorbox}[
+    enhanced,
+    colback=#1,
+    colframe=PosterLine,
+    boxrule=0.05cm,
+    arc=0.3cm,
+    left=0.38cm,right=0.38cm,top=0.3cm,bottom=0.28cm,
+    height=9.25cm,
+    valign=top
+  ]
+    \begin{minipage}[c]{1.15cm}
+      \centering
+      \tikz\node[circle,fill=PosterNavy,minimum size=0.98cm,text=white,
+        font=\fontsize{12}{14}\selectfont\bfseries]{#2};
+    \end{minipage}%
+    \begin{minipage}[c]{\dimexpr\linewidth-1.2cm\relax}
+      {\fontsize{17}{20}\selectfont\bfseries\color{PosterNavy}#3}
+    \end{minipage}
+    \par\vspace{0.22cm}
+    \centering #4
+    \par\vspace{0.2cm}
+    {\fontsize{12.4}{14.8}\selectfont\color{PosterGray}#5}\par
+  \end{tcolorbox}}
+
 \newcommand{\PartnerVisualPlaceholder}{%
   \begin{tikzpicture}
     \node[
@@ -214,9 +239,9 @@
         colback=white,colframe=PosterLine,boxrule=0.055cm,arc=0.3cm,
         left=0.65cm,right=0.65cm,top=0.42cm,bottom=0.42cm,height=5.1cm,valign=center
       ]
-        \SmallCaps{Project objective}\par\vspace{0.22cm}
-        {\fontsize{19}{23}\selectfont\bfseries\color{PosterNavy}
-          Turn fragmented scientific tools into a traceable, reviewable research workflow.}
+        \SmallCaps{Research gap}\par\vspace{0.22cm}
+        {\fontsize{16.5}{19.5}\selectfont\bfseries\color{PosterNavy}
+          Scientific workflows span specialized programs, remote schedulers, and local analysis tools. Job completion alone does not prove that scientifically valid outputs were produced or that the correct files reached the next stage.}
       \end{tcolorbox}
     \end{column}
     \begin{column}{0.49\textwidth}
@@ -247,96 +272,95 @@
       \end{tcolorbox}
 
       \vspace{0.45cm}
-      \begin{claimbox}[height=4.35cm,valign=center]
-        The implemented portal now exposes a usable, reviewable path from scientific input to verified HPC output and the next workflow stage.
+      \begin{claimbox}[height=4.9cm,valign=center]
+        \SmallCaps{Key contribution}\par\vspace{0.18cm}
+        {\fontsize{16.8}{20.2}\selectfont
+          We transformed ePolyScat from a collection of disconnected tools into a guided, inspectable workflow. Each stage preserves the researcher's original input, records output provenance, and exposes a verified handoff to the next calculation or visualization step.}
       \end{claimbox}
 
       \vspace{0.45cm}
-      \begin{contentbox}[height=5.25cm]{Four-stage research journey}
-        \vspace{0.25cm}
-        \centering
-        \begin{tikzpicture}[node distance=0.65cm]
-          \StageNode{generate}{1\\Data Generation}{PosterTeal}{white}
-          \StageNode[right=0.65cm of generate]{scatter}{2\\ePolyScat Run}{PosterTeal}{white}
-          \StageNode[right=0.65cm of scatter]{post}{3\\Post-processing}{PosterTeal}{white}
-          \StageNode[right=0.65cm of post]{visual}{4\\Visualization}{PosterNavy}{white}
-          \draw[-{Latex[length=0.42cm]},line width=0.1cm,color=PosterAmber]
-            (generate.east) -- (scatter.west);
-          \draw[-{Latex[length=0.42cm]},line width=0.1cm,color=PosterAmber]
-            (scatter.east) -- (post.west);
-          \draw[-{Latex[length=0.42cm]},line width=0.1cm,color=PosterAmber]
-            (post.east) -- (visual.west);
-          \node[below=0.18cm of scatter.south east,anchor=north east,text=PosterGray,
-            font=\fontsize{11}{13}\selectfont] {remote computation};
-          \node[below=0.18cm of visual.south,text=PosterGray,
-            font=\fontsize{11}{13}\selectfont] {local presentation};
-        \end{tikzpicture}
-      \end{contentbox}
-
-      \vspace{0.45cm}
-      \begin{contentbox}[height=16.6cm]{Portal evidence}
-        \centering
-        \ScreenshotFrame{workflow-new-run.png}\hfill
-        \ScreenshotFrame{workflow-evidence.png}
-        \PosterCaption{Left: guided Workflow mode exposes all four stages and required-file readiness. Right: Portal Run 31 shows \textbf{Science Verified}, output artifacts, and the continuation contract for Visualization \& Analysis.}
+      \begin{contentbox}[height=22.7cm]{Evidence narrative: from input to interpretation}
+        \vspace{0.15cm}
+        \begin{columns}[T,totalwidth=\linewidth]
+          \begin{column}{0.49\linewidth}
+            \EvidenceTile{PosterBlueTint}{01}{Configure}{%
+              \includegraphics[trim=400 676 80 100,clip,width=\linewidth]{workflow-new-run.png}}{%
+              Select a complete four-stage workflow and make required scientific inputs explicit.}
+          \end{column}
+          \begin{column}{0.49\linewidth}
+            \EvidenceTile{PosterGreenTint}{02}{Preserve}{%
+              \includegraphics[trim=400 566 80 200,clip,width=\linewidth]{input-preservation.png}}{%
+              Edit structured parameters without losing commands, comments, repeated records, or source ordering.}
+          \end{column}
+        \end{columns}
+        \vspace{0.35cm}
+        \begin{columns}[T,totalwidth=\linewidth]
+          \begin{column}{0.49\linewidth}
+            \EvidenceTile{PosterAmberTint}{03}{Verify}{%
+              \includegraphics[trim=400 726 80 40,clip,width=\linewidth]{workflow-evidence.png}}{%
+              Separate scheduler completion from scientific success using application-specific output evidence.}
+          \end{column}
+          \begin{column}{0.49\linewidth}
+            \EvidenceTile{PosterPurpleTint}{04}{Interpret}{%
+              \includegraphics[trim=105 55 105 55,clip,height=5.15cm]{scientific-visualization.png}%
+              \hspace{0.18cm}%
+              \includegraphics[trim=105 55 105 55,clip,height=5.15cm]{scientific-visualization-alt.png}}{%
+              Continue verified results into post-processing and local scientific visualization.}
+          \end{column}
+        \end{columns}
       \end{contentbox}
 
       \vspace{0.45cm}
       \begin{columns}[T,totalwidth=\linewidth]
-        \begin{column}{0.49\linewidth}
-          \begin{contentbox}[height=11.25cm]{Reproducible inputs}
-            \CheckLine{File View and Table View stay synchronized.}
-            \CheckLine{An ordered, lossless document model preserves repeated records, commands, comments, blank lines, and unknown input.}
-            \CheckLine{Ordered Sequence editing never replaces source text with generated defaults.}
+        \begin{column}{0.55\linewidth}
+          \begin{contentbox}[height=10.1cm]{Engineering decisions}
+            {\fontsize{15.3}{18.2}\selectfont
+            \begin{itemize}
+              \setlength{\itemsep}{0.16cm}
+              \item Lossless ordered document model for reproducible ePolyScat inputs.
+              \item Semantic output roles instead of filename-only inference.
+              \item Resource-aware execution contracts across supported HPC systems.
+              \item Provenance-aware continuation with researcher review before submission.
+            \end{itemize}}
           \end{contentbox}
         \end{column}
-        \begin{column}{0.49\linewidth}
-          \begin{contentbox}[height=11.25cm]{Verified execution contracts}
-            \CheckLine{Output manifests carry semantic roles and provenance.}
-            \CheckLine{Continuation requires scientific evidence—not scheduler completion alone.}
-            \CheckLine{Resource-aware wrappers propagate failure and verify application-specific completion markers.}
+        \begin{column}{0.43\linewidth}
+          \begin{contentbox}[height=10.1cm]{Scientific value}
+            {\fontsize{16.2}{20}\selectfont
+              Researchers can reproduce exactly what was submitted, distinguish scheduler artifacts from scientific results, and continue a calculation without manually rebuilding file dependencies.}
+            \par\vspace{0.45cm}
+            {\fontsize{14.2}{17}\selectfont\bfseries\color{PosterTealDark}
+              Reproducible input \textrightarrow{} interpretable output}
           \end{contentbox}
         \end{column}
       \end{columns}
 
       \vspace{0.45cm}
-      \begin{contentbox}[height=7.35cm]{System path: one reviewable chain}
-        \centering\vspace{0.2cm}
-        \begin{tikzpicture}[node distance=0.45cm]
-          \tikzset{arch/.style={minimum width=8.55cm,minimum height=2.65cm,
-            rounded corners=0.3cm,align=center,inner sep=0.15cm,
-            font=\fontsize{12}{14}\selectfont\bfseries,text=PosterNavy,draw=PosterLine,line width=0.045cm}}
-          \node[arch,fill=PosterBlueTint] (portal) {Vue Portal\\configuration};
-          \node[arch,fill=PosterGreenTint,right=of portal] (django) {Django\\orchestration};
-          \node[arch,fill=PosterPurpleTint,right=of django] (airavata) {Airavata gRPC\\submission};
-          \node[arch,fill=PosterAmberTint,right=of airavata] (hpc) {HPC wrappers\\Frontera · Stampede3 · Expanse};
-          \node[arch,fill=PosterGreenTint,right=of hpc] (verify) {Scientific proof\\+ provenance};
-          \node[arch,fill=PosterBlueTint,right=of verify] (handoff) {Compatible output\\handoff};
-          \foreach \a/\b in {portal/django,django/airavata,airavata/hpc,hpc/verify,verify/handoff}
-            \draw[-{Latex[length=0.35cm]},line width=0.075cm,color=PosterTeal] (\a.east)--(\b.west);
-        \end{tikzpicture}
-        \par\vspace{0.35cm}
-        {\fontsize{14}{17}\selectfont\color{PosterGray}
-          Every transition remains visible before submission and auditable after completion.}
-      \end{contentbox}
+      \begin{claimbox}[height=4.3cm,valign=center]
+        \SmallCaps{Acceptance result}\par\vspace{0.16cm}
+        {\fontsize{16.5}{19.8}\selectfont
+          Portal configuration \textrightarrow{} HPC execution \textrightarrow{} scientific proof \textrightarrow{} provenance-aware handoff \textrightarrow{} local visualization is operational and demonstrated with real runs.}
+      \end{claimbox}
 
       \vspace{0.45cm}
-      \begin{contentbox}[height=9.5cm]{Acceptance evidence}
+      \begin{contentbox}[height=8.8cm]{Acceptance evidence}
         \begin{columns}[T,totalwidth=\linewidth]
-          \begin{column}{0.32\linewidth}
-            \TinyEvidence{PosterGreenTint}{296}{non-gRPC automated checks passed}
+          \begin{column}{0.24\linewidth}
+            \TinyEvidence[4.65cm]{PosterGreenTint}{296}{Automated Checks Passed}
           \end{column}
-          \begin{column}{0.32\linewidth}
-            \TinyEvidence{PosterAmberTint}{3 / 3}{HPC wrapper regression suites passed}
+          \begin{column}{0.24\linewidth}
+            \TinyEvidence[4.65cm]{PosterAmberTint}{3}{HPC Platforms Validated}
           \end{column}
-          \begin{column}{0.32\linewidth}
-            \TinyEvidence{PosterBlueTint}{34 · 67 · 24.9k}{implementation commits · changed files · lines added}
+          \begin{column}{0.24\linewidth}
+            \TinyEvidence[4.65cm]{PosterBlueTint}{2}{Scientifically Verified Runs}
+          \end{column}
+          \begin{column}{0.24\linewidth}
+            \TinyEvidence[4.65cm]{PosterPurpleTint}{4}{Operational Workflow Stages}
           \end{column}
         \end{columns}
-        \vspace{0.35cm}
-        {\fontsize{14}{17}\selectfont\color{PosterGray}
-          \textbf{Portal evidence:} Run 23 / Expanse verified OpenMolcas and inherited \texttt{.scf.molden}; Run 31 / Frontera verified ePolyScat and produced \texttt{test01Blms.dat}.\\
-          \textbf{Remote evidence:} Frontera job 7861631 and Stampede3 jobs 3316916 / 3316918 completed with application-specific EDCS or OpenMolcas success markers. Vue production build also passed.}
+        \vspace{0.28cm}
+        {\fontsize{13.5}{16.2}\selectfont\color{PosterGray}
+          Non-gRPC test coverage, HPC wrapper regressions, and the production build passed successfully.}
       \end{contentbox}
     \end{column}
 
