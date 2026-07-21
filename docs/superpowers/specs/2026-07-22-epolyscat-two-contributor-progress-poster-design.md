@@ -139,7 +139,7 @@ No repository URL or email address is shown unless the user supplies them later.
 Create a self-contained poster directory:
 
 - `docs/poster/epolyscat-progress-poster.tex`: poster source and partner macros.
-- `docs/poster/assets/`: cropped live screenshots and any rendered supporting assets.
+- `docs/poster/assets/`: complete live page screenshots and rendered supporting assets.
 - `docs/poster/epolyscat-progress-poster.pdf`: compiled review artifact.
 
 Application source files are not modified. Existing untracked databases, archives, and user documents remain untouched.
@@ -158,7 +158,7 @@ When evidence sources differ, the current code and a fresh reproducible check ta
 
 ## Build and Verification
 
-1. Capture screenshots at a consistent desktop viewport and crop them to the poster's image frames.
+1. Capture screenshots at a consistent desktop viewport and fit the complete page content inside the poster's image frames.
 2. Run a representative backend test suite, parser/contract tests, frontend production build, and wrapper regression tests in proportion to available local dependencies.
 3. Record only successful, reproducible counts in the poster.
 4. Compile the TeX source twice with Tectonic/XeTeX.
@@ -192,9 +192,11 @@ caption:
 4. **Interpret** — show a real molecular-orbital or scientific-result
    visualization produced from workflow output.
 
-The images are evidence tiles rather than four reduced full-page screenshots.
-They use consistent crops, numbered labels, and readable captions. The layout
-must not reduce the body type below the existing readable poster scale.
+The images are numbered evidence tiles with readable captions. Portal evidence
+must show the complete captured page content rather than a cropped subsection;
+the surrounding browser chrome may remain excluded. Scientific raster outputs
+must likewise remain complete inside their tile. The layout must not reduce the
+body type below the existing readable poster scale.
 
 ### Key English Copy
 
@@ -259,3 +261,37 @@ compressed so key copy can use a larger, more visible type size.
 Contribution B retains equal width and the same eight partner-editable macros.
 The placeholder structure remains visually complete and does not inherit
 Ziming-specific claims or metrics.
+
+## Approved Full-Screenshot Revision
+
+The July 22 visual review found that the initial evidence tiles over-cropped
+the portal pages. Enlarged details made individual controls easier to see, but
+the missing page context weakened the acceptance narrative. The final layout
+therefore prioritizes complete evidence over close-up crops.
+
+### Evidence Geometry
+
+- Keep the 2-by-2 Configure, Preserve, Verify, and Interpret sequence.
+- Increase each evidence tile enough to display the complete portal capture at
+  its natural aspect ratio with no content crop.
+- Center the full capture inside a restrained tinted card; use the numbered
+  heading and one-line caption to direct attention instead of image cropping.
+- Show both scientific-orbital orientations in full, without trimming their
+  labels or viewport boundaries.
+
+### Space Recovery
+
+The extra evidence height comes from compressing explanatory regions rather
+than shrinking screenshots:
+
+- Merge Engineering Decisions and Scientific Value into one compact two-column
+  band approximately 6.5 cm high.
+- Reduce Acceptance Result to a narrow conclusion banner.
+- Reduce the four validation cards to a single compact metric strip
+  approximately 5 cm high.
+- Preserve every approved sentence and metric, but remove excess internal
+  whitespace and shorten vertical gaps.
+
+Contribution B remains the same width and keeps all eight replacement macros.
+No changes to partner content ownership or the shared visual system are part of
+this revision.
