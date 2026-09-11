@@ -49,9 +49,9 @@
         </div>
       </div>
       -->
-      <!-- iframe :src="https://epolyscat.droppages.com/front" frameborder="0" width="100%" height="500px"></iframe -->
+      <!-- iframe src="https://rrlucchese.github.io/" frameborder="0" width="100%" height="500px"></iframe -->
       <div>
-        <iframe src="https://epolyscat.droppages.com/IntroREADME2/"></iframe>
+        <iframe src="https://rrlucchese.github.io/"></iframe>
       </div>
     </div>
   </div>
@@ -70,7 +70,7 @@ export default {
   methods: {
     async fetchHtml() {
       try {
-        const response = await fetch('https://epolyscat.droppages.com/front');
+        const response = await fetch('https://rrlucchese.github.io/');
         this.externalHtml = await response.text();
       } catch (error) {
         console.error('Error fetching HTML:', error);
