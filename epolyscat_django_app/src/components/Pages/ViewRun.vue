@@ -15,6 +15,7 @@
           </div>
         </div>
         <div class="view-run-heading-actions">
+          <div v-if="run" class="view-run-identity"><strong>Run ID</strong> {{ run.id }}</div>
           <div class="view-run-status" v-if="statusBadges.length">
             <span
                 v-for="badge in statusBadges"
