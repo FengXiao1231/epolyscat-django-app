@@ -814,4 +814,3 @@ def test_run_detail_route_still_loads_run_page():
 
     assert "name: 'Run'" in route
     assert "component: ViewRun" in route
-
