@@ -1,6 +1,6 @@
 <template>
   <div id="app" class="portal-app flex-fill h-100 overflow-auto">
-    <a class="portal-skip-link" href="#portal-main">Skip to page content</a>
+    <a class="portal-skip-link" href="#portal-main" @click.prevent="focusPageContent">Skip to page content</a>
     <notifications-display/>
     <div class="portal-shell w-100 h-100 d-flex">
       <button type="button" class="portal-navigation-toggle btn btn-outline-primary"
@@ -9,7 +9,7 @@
       <div id="portal-navigation" class="overflow-auto app_left_nav" :class="{ 'is-open': navigationOpen }">
         <AppLeftNav/>
       </div>
-      <div id="portal-main" class="portal-content flex-fill overflow-auto" tabindex="-1">
+      <div id="portal-main" ref="pageContent" class="portal-content flex-fill overflow-auto" tabindex="-1">
         <router-view class="w-100" :key="$route.fullPath"/>
       </div>
       <!--      <div class="overflow-auto">-->
@@ -41,6 +41,9 @@ export default {
     },
   },
   methods: {
+        focusPageContent() {
+            this.$refs.pageContent.focus();
+        },
         async refreshRuns() {
             this.$store.commit("loading/START", { key: "runs", message: "Fetching Runs" });
 

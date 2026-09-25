@@ -79,6 +79,7 @@
         </table-overlay-info>
       </div>
       <b-pagination
+          v-if="viewsPagination && viewsPagination.total > pageSize"
           v-model="page"
           :total-rows="viewsPagination.total"
           :per-page="pageSize"
