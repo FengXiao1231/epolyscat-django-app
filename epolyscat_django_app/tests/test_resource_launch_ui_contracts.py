@@ -398,4 +398,3 @@ def test_hidden_queue_editor_cannot_overwrite_visible_resource_values():
     assert 'v-on:input="onQueueSettingEditor"' not in source
     assert "onQueueSettingEditor(evt)" not in source
     assert "applyQueueDefaults(queueDefault)" in source
-
