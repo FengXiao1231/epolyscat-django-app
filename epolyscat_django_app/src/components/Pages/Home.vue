@@ -9,11 +9,13 @@
         </section>
         <section aria-labelledby="recent-runs-title">
           <h2 id="recent-runs-title">Recent Runs</h2>
-          <LoadingOverlay name="runs" class="portal-recent-runs">
-            <router-link v-for="run in displayedRuns" :key="run.id" :to="`/runs/${run.id}`" v-slot="{isExactActive, href, navigate}">
-              <b-button variant="outline-primary" :class="{active: isExactActive}" :href="href" @click="navigate">{{ run.name }}</b-button>
-            </router-link>
-            <p v-if="runCount === 0" class="portal-empty-state">No recent runs</p>
+          <LoadingOverlay name="runs">
+            <div class="portal-recent-runs">
+              <router-link v-for="run in displayedRuns" :key="run.id" :to="`/runs/${run.id}`" v-slot="{isExactActive, href, navigate}">
+                <b-button variant="outline-primary" :class="{active: isExactActive}" :href="href" @click="navigate">{{ run.name }}</b-button>
+              </router-link>
+              <p v-if="runCount === 0" class="portal-empty-state">No recent runs</p>
+            </div>
           </LoadingOverlay>
           <b-button v-if="runCount > 0" variant="outline-primary" to="/runs">View all runs</b-button>
         </section>
