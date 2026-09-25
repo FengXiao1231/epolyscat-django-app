@@ -15,7 +15,10 @@
           </div>
         </div>
         <div class="view-run-heading-actions">
-          <div v-if="run" class="view-run-identity"><strong>Run ID</strong> {{ run.id }}</div>
+          <div v-if="run" class="view-run-identity">
+            <strong>{{ isWorkflowJob ? "Current step Job ID" : "Job ID" }}</strong>
+            {{ jobDetailsLoading ? "Loading…" : (jobRun && jobRun.jobId) || "Not available" }}
+          </div>
           <div class="view-run-status" v-if="statusBadges.length">
             <span
                 v-for="badge in statusBadges"
@@ -176,7 +179,21 @@
                 </select>
               </div>
             </div>
-            <pre>{{ codePreview }}</pre>
+            <pre
+                id="run-file-preview"
+                :key="`${selectedFile}-${previewExpanded}`"
+                tabindex="0"
+                :aria-label="`Preview of ${selectedFile}`"
+            >{{ previewExpanded ? codePreview : collapsedCodePreview }}</pre>
+            <div v-if="isPreviewTruncated" class="file-preview-actions">
+              <span>{{ previewExpanded ? "Full file content shown." : "Showing the beginning of this file." }}</span>
+              <b-button
+                  variant="link"
+                  :aria-expanded="previewExpanded ? 'true' : 'false'"
+                  aria-controls="run-file-preview"
+                  @click="previewExpanded = !previewExpanded"
+              >{{ previewExpanded ? "Collapse preview" : "Show full content" }}</b-button>
+            </div>
           </section>
 
           <section class="view-run-resource">
@@ -239,6 +256,9 @@ export default {
   data() {
     return {
       run: null,
+      jobRun: null,
+      jobDetailsLoading: false,
+      jobDetailsRequestId: 0,
       presentation: {
         mode: "module",
         subtitle: "Modules/EPOLYSCAT_DMAT",
@@ -255,6 +275,7 @@ export default {
       inputFiles: [],
       outputFiles: [],
       selectedFileContent: null,
+      previewExpanded: false,
       filePreviewLoading: false,
       filePreviewError: "",
       filePreviewRequestId: 0,
@@ -285,6 +306,16 @@ export default {
     },
     visualizationMode() {
       return this.$route.query.visualize === "1";
+    },
+    isWorkflowJob() {
+      return this.presentation.mode === "workflow" && !this.isWorkflowChildRun;
+    },
+    jobRunId() {
+      if (this.isWorkflowJob) {
+        return (this.activeWorkflowStage && this.activeWorkflowStage.child_run_id)
+            || this.presentation.active_child_run_id || null;
+      }
+      return this.runId;
     },
     workflowSubtitle() {
       if (this.visualizationMode) {
@@ -579,6 +610,14 @@ export default {
           && this.plotForm.y_axis
       );
     },
+    collapsedCodePreview() {
+      // Bound both long logs and files containing a single very long line.
+      const excerpt = String(this.codePreview).slice(0, 20000);
+      return excerpt.split("\n").slice(0, 100).join("\n");
+    },
+    isPreviewTruncated() {
+      return this.collapsedCodePreview.length < String(this.codePreview).length;
+    },
     codePreview() {
       if (this.filePreviewLoading) {
         return `# ${this.selectedFile}\nLoading file preview...`;
@@ -628,7 +667,9 @@ export default {
       try {
         this.run = await RunService.fetchRun({ runId: this.runId });
         this.presentation = this.normalizePresentation(this.run.presentation);
+        const jobDetails = this.loadJobDetails();
         await this.loadRunFileCatalog();
+        await jobDetails;
         await this.loadWorkflowContinuation();
         this.initializePlotForm();
 
@@ -643,6 +684,29 @@ export default {
         }
       } catch (error) {
         eventBus.$emit("error", { name: `Error while trying to fetch run with id: ${this.runId}`, error });
+      }
+    },
+    async loadJobDetails() {
+      const requestId = ++this.jobDetailsRequestId;
+      const jobRunId = this.jobRunId;
+      this.jobRun = null;
+      this.jobDetailsLoading = false;
+      if (!jobRunId) return;
+      if (String(jobRunId) === String(this.runId)) {
+        this.jobRun = this.run;
+        return;
+      }
+      this.jobDetailsLoading = true;
+      try {
+        const jobRun = await RunService.fetchRun({ runId: jobRunId });
+        if (requestId === this.jobDetailsRequestId && jobRunId === this.jobRunId) {
+          this.jobRun = jobRun;
+        }
+      } catch (error) {
+        // A missing step must not substitute the parent's local ID for a Job ID.
+        if (requestId === this.jobDetailsRequestId) this.jobRun = null;
+      } finally {
+        if (requestId === this.jobDetailsRequestId) this.jobDetailsLoading = false;
       }
     },
     normalizePresentation(presentation) {
@@ -755,6 +819,7 @@ export default {
     async fetchSelectedFileContent() {
       const requestId = this.filePreviewRequestId + 1;
       this.filePreviewRequestId = requestId;
+      this.previewExpanded = false;
       this.selectedFileContent = null;
       this.filePreviewError = "";
 

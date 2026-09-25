@@ -436,12 +436,7 @@
 
             <div class="data-entry-body data-entry-body-table">
               <div class="data-entry-editor-grid">
-                <section class="data-entry-editor-panel">
-                  <div class="data-entry-section-heading">
-                    <h3>{{ activeDataEntryTabLabel }}</h3>
-                    <span>{{ activeDataEntrySection.recordGroup }}</span>
-                  </div>
-
+                <section class="data-entry-editor-panel" :aria-label="activeDataEntryTabLabel">
                   <div
                       v-if="activeDataEntrySection.type === 'fields'"
                       class="manual-field-rows"
@@ -798,16 +793,19 @@
         </div>
       </section>
 
-      <RunResourceSettings
-          ref="runResourceSettings"
-          :run="run"
-          :input-state="inputState"
-          :application-module-id="resourceApplicationModuleId"
-          :application-label="resourceApplicationLabel"
-          :deployment-execution-kind="resourceDeploymentExecutionKind"
-          v-on:updateResources="updateResources"
-          v-on:readinessChanged="onResourceReadinessChanged"
-      />
+      <section class="new-run-resource" aria-labelledby="new-run-resource-title">
+        <h2 id="new-run-resource-title">Resource</h2>
+        <RunResourceSettings
+            ref="runResourceSettings"
+            :run="run"
+            :input-state="inputState"
+            :application-module-id="resourceApplicationModuleId"
+            :application-label="resourceApplicationLabel"
+            :deployment-execution-kind="resourceDeploymentExecutionKind"
+            v-on:updateResources="updateResources"
+            v-on:readinessChanged="onResourceReadinessChanged"
+        />
+      </section>
 
       <div class="validation-copy" aria-hidden="true">
         <b-form-invalid-feedback :state="inputState.root">
@@ -3771,7 +3769,6 @@ export default {
   padding: 18px 16px;
 }
 
-.data-entry-section-heading,
 .data-entry-script-header {
   align-items: baseline;
   display: flex;
@@ -3780,7 +3777,6 @@ export default {
   margin-bottom: 14px;
 }
 
-.data-entry-section-heading h3,
 .data-entry-script-header h3 {
   color: #17212b;
   font-size: 15px;
@@ -3789,7 +3785,6 @@ export default {
   margin: 0;
 }
 
-.data-entry-section-heading span,
 .data-entry-script-header span {
   color: #61707c;
   font-size: 12px;

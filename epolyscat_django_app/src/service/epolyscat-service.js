@@ -853,8 +853,8 @@ export const ExperimentService = {
             runCount: runs_count
         }
     },
-    async fetchAllExperiments({page = 1, pageSize = 1000} = {page: 1, pageSize: 1000}) {
-        const {data} = await axiosInstance.get(`/epolyscat_django_app/api/experiments/?page=${page}&page_size=${pageSize}`);
+    async fetchAllExperiments({page = 1, pageSize = 1000, search = ""} = {}) {
+        const {data} = await axiosInstance.get(`/epolyscat_django_app/api/experiments/?page=${page}&page_size=${pageSize}&search=${encodeURIComponent(search)}`);
         data.results = data.results.map(this.encodeObj);
         return data;
     },
@@ -1288,14 +1288,14 @@ export const ViewService = {
             //readonly: ViewService.readonlyViewTypes.indexOf(obj.type) >= 0
         };
     },
-    async fetchAllViews({page = 1, pageSize = 1000, tutorials = false} = {page: 1, pageSize: 1000, tutorials: false}) {
+    async fetchAllViews({page = 1, pageSize = 1000, tutorials = false, search = ""} = {}) {
         let url, data, res;
         if (tutorials) {
             url = "/epolyscat_django_app/api/views/tutorials/";
             res = await axiosInstance.get(url);
             data = {"count": 1, "next": null, "previous": null, "results": [res.data].map(this.encodeObj)}
         } else {
-            url = `/epolyscat_django_app/api/views/?page=${page}&page_size=${pageSize}`;
+            url = `/epolyscat_django_app/api/views/?page=${page}&page_size=${pageSize}&search=${encodeURIComponent(search)}`;
             res = await axiosInstance.get(url);
             data = res.data;
             data.results = data.results.map(this.encodeObj);
