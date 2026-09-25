@@ -15,14 +15,14 @@ const state = {
 
 const actions = {
     //async fetchViews({commit}) {
-    fetchViews({commit}, {page = 1, pageSize = 1000, tutorials = false} = {
+    fetchViews({commit}, {page = 1, pageSize = 1000, tutorials = false, search = ""} = {
         page: 1, pageSize: 1000, tutorials: false
     }) {
-        const queryString = JSON.stringify({page, pageSize, tutorials});
+        const queryString = JSON.stringify({page, pageSize, tutorials, ...(search ? {search} : {})});
         if (pendingViewRequests[queryString])
             return pendingViewRequests[queryString];
 
-        const request = ViewService.fetchAllViews({page, pageSize, tutorials})
+        const request = ViewService.fetchAllViews({page, pageSize, tutorials, search})
             .then(viewsRes => {
                 const views = viewsRes.results;
                 const viewIds = views.map(({viewId, name, owner, updated, created, deleted, type, activeRunCount, runCount, readonly}) => {
@@ -69,12 +69,12 @@ const actions = {
 
     /*
     async fetchViews({commit}) {
-                             , {page = 1, pageSize = 1000, tutorials = false} = {
+                             , {page = 1, pageSize = 1000, tutorials = false, search = ""} = {
         page: 1, pageSize: 1000, tutorials: false
     }) {
-        const queryString = JSON.stringify({page, pageSize, tutorials});
+        const queryString = JSON.stringify({page, pageSize, tutorials, ...(search ? {search} : {})});
 
-        const viewsRes = await ViewService.fetchAllViews({page, pageSize, tutorials});
+        const viewsRes = await ViewService.fetchAllViews({page, pageSize, tutorials, search});
         const views = viewsRes.results;
 
         const viewIds = views.map(({viewId, name, owner, updated, created, deleted, type, activeRunCount, runCount, readonly}) => {
@@ -183,8 +183,8 @@ const getters = {
 
 /*
     getViews: (state, getters) => {
-        return ({page = 1, pageSize = 1000, tutorials = false} = {page: 1, pageSize: 1000, tutorials: false}) => {
-            const queryString = JSON.stringify({page, pageSize, tutorials});
+        return ({page = 1, pageSize = 1000, tutorials = false, search = ""} = {page: 1, pageSize: 1000, tutorials: false}) => {
+            const queryString = JSON.stringify({page, pageSize, tutorials, ...(search ? {search} : {})});
             const viewIds = state.viewListMap[queryString];
             if (viewIds) {
                 return viewIds.map(viewId => getters.getView({viewId}));
@@ -198,9 +198,17 @@ const getters = {
         return () => Object.values(state.viewMap).filter(view => view.id != -1);
     },
 
+    getViewsPage: (state) => {
+        return ({page = 1, pageSize = 1000, tutorials = false, search = ""} = {}) => {
+            const queryString = JSON.stringify({page, pageSize, tutorials, ...(search ? {search} : {})});
+            const ids = state.viewListMap[queryString];
+            return ids ? ids.map(id => state.viewMap[id]).filter(Boolean) : null;
+        };
+    },
+
     getViewsPagination: (state) => {
-        return ({page = 1, pageSize = 1000, tutorials = false} = {page: 1, pageSize: 1000, tutorials: false}) => {
-            const queryString = JSON.stringify({page, pageSize, tutorials});
+        return ({page = 1, pageSize = 1000, tutorials = false, search = ""} = {page: 1, pageSize: 1000, tutorials: false}) => {
+            const queryString = JSON.stringify({page, pageSize, tutorials, ...(search ? {search} : {})});
             const viewListPagination = state.viewListPaginationMap[queryString];
             if (viewListPagination) {
                 return viewListPagination;
