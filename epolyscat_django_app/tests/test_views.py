@@ -12,10 +12,64 @@ from epolyscat_django_app import models, serializers, views
 
 
 class RunViewSetBackendTests(TestCase):
+    def attach_application_registry(self, request):
+        client = getattr(request, "airavata_client", SimpleNamespace())
+        entries = [("epolyscat-module", "ePolyScat"), ("gaussian-module", "Gaussian16"), ("openmolcas-module", "OpenMolcas")]
+        client.getAccessibleAppModules = mock.Mock(return_value=[
+            SimpleNamespace(appModuleId=module_id, appModuleName=name) for module_id, name in entries
+        ])
+        if not hasattr(client, "getAllApplicationInterfaces"):
+            client.getAllApplicationInterfaces = mock.Mock(return_value=[
+                SimpleNamespace(applicationInterfaceId=module_id + "-interface", applicationModules=[module_id], applicationInputs=[])
+                for module_id, name in entries
+            ])
+        if not hasattr(client, "getAllApplicationDeployments"):
+            client.getAllApplicationDeployments = mock.Mock(return_value=[
+                SimpleNamespace(appModuleId=module_id, appDeploymentId=module_id + "-deployment", computeHostId="cluster", executablePath="/opt/bin/" + name)
+                for module_id, name in entries
+            ])
+        request.airavata_client = client
+        request.authz_token = getattr(request, "authz_token", object())
+        return client
+
     def attach_airavata_client(self, request, **methods):
         request.authz_token = getattr(request, "authz_token", object())
         request.airavata_client = SimpleNamespace(**methods)
         return request.airavata_client
+
+    @override_settings(GATEWAY_ID="test-gateway", EPOLYSCAT={})
+    def test_api_settings_reports_discovery_outage_as_service_unavailable(self):
+        request = RequestFactory().get("/api/settings/")
+        request.user = get_user_model().objects.create_user(username="catalog-outage")
+        self.attach_airavata_client(request, getAccessibleAppModules=mock.Mock(side_effect=RuntimeError("offline")))
+        result = views.api_settings(request)
+        self.assertEqual(result.status_code, 503)
+        self.assertNotIn("EPOLYSCAT", result.data)
+
+    @override_settings(GATEWAY_ID="test-gateway", EPOLYSCAT={})
+    def test_api_settings_discovers_ids_without_local_configuration(self):
+        request = RequestFactory().get("/api/settings/")
+        request.user = get_user_model().objects.create_user(username="catalog-discovery")
+        self.attach_application_registry(request)
+        result = views.api_settings(request)
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.data["EPOLYSCAT"]["GAUSSIAN16_APPLICATION_ID"], "gaussian-module")
+        self.assertEqual(len(result.data["applications"]), 3)
+
+    @override_settings(GATEWAY_ID="test-gateway", EPOLYSCAT={})
+    @mock.patch("epolyscat_django_app.views.user_storage.open_file")
+    def test_removed_application_is_rejected_before_input_staging(self, open_file):
+        request = RequestFactory().post("/api/runs/1/submit/")
+        request.user = get_user_model().objects.create_user(username="catalog-removed")
+        self.attach_airavata_client(request, getAccessibleAppModules=mock.Mock(return_value=[]),
+                                   getAllApplicationInterfaces=mock.Mock(return_value=[]),
+                                   getAllApplicationDeployments=mock.Mock(return_value=[]))
+        viewset = views.RunViewSet()
+        viewset._create_remote_execution = mock.Mock()
+        with self.assertRaises(exceptions.ValidationError):
+            viewset._submit_single_run(request, self.create_run(request.user), False)
+        open_file.assert_not_called()
+        viewset._create_remote_execution.assert_not_called()
 
     def attach_execution_client(
         self,
@@ -1555,6 +1609,7 @@ class RunViewSetBackendTests(TestCase):
                 ]
             ),
         )
+        self.attach_application_registry(request)
         mock_open_file.return_value = StringIO("gaussian input")
         mock_save_input_file.return_value = SimpleNamespace(
             productUri="airavata-dp://staged-gaussian"
@@ -1589,6 +1644,7 @@ class RunViewSetBackendTests(TestCase):
         )
 
     @override_settings(
+        GATEWAY_ID="test-gateway",
         EPOLYSCAT={
             "EPOLYSCAT_APPLICATION_ID": "epolyscat-module",
             "GAUSSIAN16_APPLICATION_ID": "gaussian-module",
@@ -1599,6 +1655,7 @@ class RunViewSetBackendTests(TestCase):
         user = get_user_model().objects.create_user(username="api-settings")
         request = RequestFactory().get("/api/settings/")
         request.user = user
+        self.attach_application_registry(request)
 
         response = views.api_settings(request)
 
@@ -1644,6 +1701,7 @@ class RunViewSetBackendTests(TestCase):
                 ]
             ),
         )
+        self.attach_application_registry(request)
         mock_open_file.return_value = StringIO("openmolcas input")
         mock_save_input_file.return_value = SimpleNamespace(
             productUri="airavata-dp://staged-openmolcas"
@@ -1708,12 +1766,14 @@ class RunViewSetBackendTests(TestCase):
                 return_value=[
                     SimpleNamespace(
                         appModuleId="epolyscat-module",
+                        appDeploymentId="epolyscat-deployment",
                         computeHostId="frontera",
                         executablePath="/opt/epolyscat/bin/ePolyScat",
                     ),
                 ]
             ),
         )
+        self.attach_application_registry(request)
         mock_open_file.return_value = StringIO("input")
         mock_save_input_file.side_effect = [
             SimpleNamespace(productUri="airavata-dp://staged-molden"),
@@ -2185,7 +2245,7 @@ class RunViewSetBackendTests(TestCase):
         request.authz_token = "token"
         client = self.attach_airavata_client(
             request,
-            getAllAppModules=mock.Mock(return_value=[]),
+            getAccessibleAppModules=mock.Mock(return_value=[]),
             getAllApplicationInterfaces=mock.Mock(return_value=[]),
             getAllApplicationDeployments=mock.Mock(return_value=[]),
         )
@@ -2206,7 +2266,7 @@ class RunViewSetBackendTests(TestCase):
                 "Cube2igor",
             ],
         )
-        client.getAllAppModules.assert_called_once_with(
+        client.getAccessibleAppModules.assert_called_once_with(
             request.authz_token,
             "gateway",
         )
