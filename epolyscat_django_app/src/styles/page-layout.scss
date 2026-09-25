@@ -1,0 +1,137 @@
+// Shared page chrome, scoped to the ePolyScat app rather than the gateway.
+#app.portal-app {
+  --portal-primary: #226597;
+  --portal-text: #1f2933;
+  --portal-border: #d8dde5;
+  --portal-width: 1200px;
+  --portal-gutter: 32px;
+  color: var(--portal-text);
+
+  .portal-shell { min-width: 0; }
+  .app_left_nav {
+    flex: 0 0 250px;
+    min-width: 0;
+    border-right: 1px solid var(--portal-border);
+  }
+  .portal-content { min-width: 0; background: #fff; }
+  .portal-navigation-toggle { display: none; }
+  .portal-skip-link {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 1100;
+    padding: 8px 16px;
+    background: #fff;
+    transform: translateY(-200%);
+    &:focus { transform: translateY(0); }
+  }
+
+  .portal-page,
+  .new-run-page,
+  .workflow-run-page,
+  .view-run-page { min-height: 100%; background: #fff; color: var(--portal-text); }
+
+  .portal-page-content,
+  .new-run-content,
+  .workflow-run-content,
+  .view-run-content {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--portal-width);
+    margin: 0 auto;
+    padding: 24px var(--portal-gutter) 64px;
+    min-width: 0;
+  }
+
+  .portal-page-header,
+  .new-run-heading,
+  .workflow-heading,
+  .view-run-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .portal-page-title,
+  .new-run-title,
+  .workflow-heading h1,
+  .view-run-heading h1 {
+    color: var(--portal-text);
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .portal-content h2 { font-size: 18px; font-weight: 700; line-height: 1.4; }
+  .portal-content .breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin: 0 0 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  .portal-page-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .portal-content .btn:not(.btn-link):not(.btn-sm),
+  .input-file-storage-button,
+  .input-file-computer-button,
+  .workflow-storage-button,
+  .workflow-computer-button {
+    min-height: 38px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    padding: 8px 12px;
+  }
+  .input-file-storage-button,
+  .workflow-storage-button { background: #fff; border: 1px solid var(--portal-primary); color: var(--portal-primary); }
+  .input-file-storage-button:hover,
+  .workflow-storage-button:hover { background: var(--portal-primary); color: #fff; }
+
+  .portal-content input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  .portal-content select,
+  .portal-content textarea { border-radius: 6px; }
+  .portal-content a:focus-visible,
+  .portal-content button:focus-visible,
+  .portal-content input:focus-visible,
+  .portal-content select:focus-visible,
+  .portal-content textarea:focus-visible,
+  .portal-navigation-toggle:focus-visible {
+    outline: 3px solid var(--portal-primary);
+    outline-offset: 3px;
+  }
+
+  .portal-home-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(260px, 1fr); gap: 32px; }
+  .portal-recent-runs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .portal-recent-runs .btn { text-align: left; overflow-wrap: anywhere; }
+  .portal-empty-state { padding: 32px 16px; text-align: center; color: #52616b; border: 1px solid var(--portal-border); border-radius: 6px; }
+  .portal-documentation-frame { width: 100%; min-height: 65vh; border: 1px solid var(--portal-border); border-radius: 6px; }
+  .portal-experiment-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin: 24px 0; }
+  .portal-experiment-fields label { display: block; font-weight: 600; }
+
+  @media (max-width: 900px) {
+    --portal-gutter: 16px;
+    .portal-shell { flex-direction: column; }
+    .portal-navigation-toggle { display: block; align-self: flex-start; margin: 12px 16px; }
+    .app_left_nav {
+      display: none;
+      flex: 0 0 auto;
+      width: 100%;
+      max-height: 40vh;
+      border-right: 0;
+      border-bottom: 1px solid var(--portal-border);
+      &.is-open { display: block; }
+    }
+    .portal-home-grid,
+    .portal-experiment-fields { grid-template-columns: minmax(0, 1fr); }
+    .view-run-layout.with-plot-panel { grid-template-columns: minmax(0, 1fr); }
+    .view-run-heading-actions { align-items: flex-start; }
+    .view-run-status { flex-wrap: wrap; }
+  }
+}

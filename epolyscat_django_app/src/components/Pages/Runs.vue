@@ -1,11 +1,11 @@
 <template>
-  <div class="w-100 h-100 bg-light p-2">
+  <div class="portal-page">
     <multipane class="w-100 h-100" layout="vertical">
-      <div class="h-100 bg-white d-flex flex-column overflow-auto align-items-center" style="flex-grow: 1">
-                <div class="d-flex flex-row justify-content-between" style="padding: 30px 0 20px; flex-wrap: wrap; width: 93%">
-                    <h3 style="line-height: 38px; margin: 0;">{{ pageName }}</h3>
+      <div class="portal-page-content d-flex flex-column overflow-auto" style="flex-grow: 1">
+                <div class="portal-page-header">
+                    <h1 class="portal-page-title">{{ pageName }}</h1>
                     <span></span>
-                    <div class="d-flex flex-row button_row align-items-center">
+                    <div class="portal-page-actions">
                         <span v-if="numberOfRunsSelected > 0" style="line-height: 41px;">
                             {{ numberOfRunsSelected }}
                             <span v-if="numberOfRunsSelected == 1">Run</span>
@@ -41,9 +41,10 @@
                         </b-popover>
                         <div v-show="!isTutorials && numberOfRunsSelected >= 1" class="mx-1" style="width: 0.1px; height: 50%; border: 0.5px solid black" />
                         <router-link v-if="!isTutorials" :to="newRunLink" v-slot="{ href, navigate }">
-                            <b-button variant="light" :href="href" @click="navigate">New Run</b-button>
+                            <b-button variant="primary" :href="href" @click="navigate">New Run</b-button>
                         </router-link>
                     </div>
+                </div>
 
 
 
@@ -81,7 +82,7 @@
             <div class="pl-3" v-if="!view || !view.readonly">
                  <div v-show="!isTutorials && numberOfRunsSelected >= 1" class="mx-1" style="width: 0.1px; height: 50%; border: 0.5px solid black;">
                    <router-link v-if="!isTutorials" :to="newRunLink" v-slot="{ href, navigate }">
-                    <b-button variant="light" :href="href" @click="navigate">New Run</b-button>
+                    <b-button variant="primary" :href="href" @click="navigate">New Run</b-button>
                    </router-link>
                  </div>
             </div>
@@ -155,6 +156,7 @@
                         </template>
                     </ListView>
               </LoadingOverlay>
+            </div>
 
 <!--
 
@@ -259,7 +261,6 @@
         </div>
 
 -->
-
       </div>
       <multipane-resizer v-if="isCompareEnabled"/>
       <div class="h-100 m-1" v-if="isCompareEnabled" style="overflow-y: scroll;">
