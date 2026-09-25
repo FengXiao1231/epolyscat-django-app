@@ -3,12 +3,12 @@ import pytest
 from epolyscat_django_app import utility_runtime_contracts
 
 
-def test_utility_contracts_match_the_manual_data_protocols():
+def test_utility_contracts_match_the_gateway_input_protocols():
     expected = {
         "CnvMath": ("BendOrient_Output", 1),
         "CnvMatLab": ("BendOrient_Output", 1),
         "CnvLinFull": ("DumpOut", 1),
-        "MoldenMerge": ("molden.dat", 2),
+        "MoldenMerge": ("molden.dat", 1),
         "NRFPAD": ("Cross_Section_Input_File", 1),
         "Cube2igor": ("Cube_Output", 1),
     }
@@ -40,23 +40,19 @@ def test_utility_input_validation_requires_control_and_scientific_data_files():
         )
 
 
-def test_molden_merge_requires_two_distinct_molden_files():
-    with pytest.raises(ValueError, match="at least 2"):
-        utility_runtime_contracts.validate_utility_input_values(
-            "MoldenMerge",
-            {
-                "ePolyscat_Input_File": "airavata-dp://control",
-                "molden.dat": "airavata-dp://first",
-            },
-        )
-
+@pytest.mark.parametrize("files", ["airavata-dp://first", "airavata-dp://first,airavata-dp://second"])
+def test_molden_merge_accepts_one_or_more_molden_files(files):
     utility_runtime_contracts.validate_utility_input_values(
         "MoldenMerge",
-        {
-            "ePolyscat_Input_File": "airavata-dp://control",
-            "molden.dat": "airavata-dp://first,airavata-dp://second",
-        },
+        {"ePolyscat_Input_File": "airavata-dp://control", "molden.dat": files},
     )
+
+
+def test_molden_merge_still_requires_a_data_file():
+    with pytest.raises(ValueError, match="molden.dat"):
+        utility_runtime_contracts.validate_utility_input_values(
+            "MoldenMerge", {"ePolyscat_Input_File": "airavata-dp://control"},
+        )
 
 
 def test_utility_input_names_prefer_specific_data_without_duplicate_generic_aliases():

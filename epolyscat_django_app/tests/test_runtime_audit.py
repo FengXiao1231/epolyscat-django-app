@@ -178,7 +178,7 @@ def test_runtime_audit_reports_missing_utility_control_input():
     )
 
 
-def test_runtime_audit_requires_collection_input_for_molden_merge():
+def test_runtime_audit_accepts_single_file_input_for_molden_merge():
     module = SimpleNamespace(appModuleId="epolyscat-module")
     interface = SimpleNamespace(
         applicationInterfaceId="epolyscat-interface",
@@ -206,9 +206,9 @@ def test_runtime_audit_requires_collection_input_for_molden_merge():
     utilities = {utility["id"]: utility for utility in result["utilities"]}
 
     assert utilities["CnvMath"]["ready"] is True
-    assert utilities["MoldenMerge"]["ready"] is False
-    assert utilities["MoldenMerge"]["supports_required_file_count"] is False
-    assert utilities["MoldenMerge"]["minimum_data_file_count"] == 2
+    assert utilities["MoldenMerge"]["ready"] is True
+    assert utilities["MoldenMerge"]["supports_required_file_count"] is True
+    assert utilities["MoldenMerge"]["minimum_data_file_count"] == 1
 
 
 def test_runtime_audit_treats_frontera_wrapper_as_utility_dispatcher():
