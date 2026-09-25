@@ -1,13 +1,11 @@
 <template>
-  <div class="w-100 h-100 bg-light p-2">
-    <div class="w-100 h-100 bg-white overflow-auto p-3">
+  <div class="portal-page">
+    <div class="portal-page-content">
       <b-breadcrumb>
         <b-breadcrumb-item to="/views">Views</b-breadcrumb-item>
       </b-breadcrumb>
-      <div class="w-100 mb-3">
-        <div class="d-inline" style="font-weight: 400; font-size: 19px;">Views</div>
-      </div>
-      <div class="w-100 text-right mb-2">
+      <header class="portal-page-header"><h1 class="portal-page-title">Views</h1></header>
+      <div class="portal-page-actions">
         <!--        <router-link to="/create-view" v-slot="{ href, route, navigate, isActive,isExactActive }">-->
         <!--          <b-button variant="primary" size="sm" tag="a" :class="{active: isExactActive}" :href="href"-->
         <!--                    @click="navigate">-->
