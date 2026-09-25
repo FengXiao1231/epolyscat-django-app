@@ -34,6 +34,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from rest_framework import (
     exceptions,
+    filters,
     pagination,
     permissions,
     response,
@@ -489,6 +490,8 @@ class ExperimentViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ExperimentSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
     pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name", "description"]
 
     def get_queryset(self):
         request = self.request
@@ -2274,6 +2277,8 @@ class ViewsViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.ViewSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
     pagination_class = Pagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["name"]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
