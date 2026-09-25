@@ -381,13 +381,14 @@ def test_analysis_utilities_declare_manual_specific_required_inputs():
         assert token in service_source
 
 
-def test_utilities_require_a_control_file_and_molden_merge_requires_two_inputs():
+def test_utilities_require_a_control_file_and_molden_merge_accepts_one_input():
     source = _source()
     service_source = _epolyscat_service_source()
 
     assert "utilityControlRequiredFile()" in source
     assert source.count("utilityControlRequiredFile(),") == 6
-    assert 'minimumFileCount: 2' in source
+    assert 'minimumFileCount: 1' in source
+    assert 'minimumFileCount: 2' not in source
     assert 'allowsMultiple: true' in source
     assert "requiredFileIsReady(file)" in source
     assert "requiredFileIsReadyForStage(stage.id, file)" in source
