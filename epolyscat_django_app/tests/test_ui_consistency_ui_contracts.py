@@ -202,4 +202,3 @@ def test_home_create_run_button_opens_new_run_catalog():
 
     assert "create-run-type-modal" not in source
     assert "chooseWorkflowRun" not in source
-
