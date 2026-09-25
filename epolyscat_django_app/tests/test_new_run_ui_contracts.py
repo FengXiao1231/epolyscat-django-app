@@ -1435,4 +1435,3 @@ def test_clone_run_preserves_group_resource_profile():
 
     assert "groupResourceProfileId: run.groupResourceProfileId" in body
     assert body.index("groupResourceProfileId") < body.index("computeResourceId")
-

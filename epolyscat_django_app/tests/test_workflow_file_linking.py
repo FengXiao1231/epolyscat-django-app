@@ -111,4 +111,3 @@ def test_workflow_output_binding_uses_manual_specific_file_flow():
     result = _run_node_script(script)
 
     assert result.returncode == 0, result.stderr
-
