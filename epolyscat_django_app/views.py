@@ -40,10 +40,11 @@ from rest_framework import (
     status,
     viewsets,
 )
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 
 from epolyscat_django_app import (
+    application_catalog,
     models,
     output_presentation_contracts,
     remote_launch_contract,
@@ -113,15 +114,7 @@ DATA_GENERATION_FILE_INPUT_NAMES = {
     "Gaussian16": "Gaussian_Inputs",
     "OpenMolcas": "Molcas_Inputs",
 }
-DEFAULT_EPOLYSCAT_APPLICATION_MODULE_ID = (
-    "ePolyScat_940ab1c9-4ceb-431c-8595-c6246a195442"
-)
-DEFAULT_GAUSSIAN16_APPLICATION_MODULE_ID = (
-    "Gaussian16_4971a157-cad4-45cd-9aba-a994273c5046"
-)
-DEFAULT_OPENMOLCAS_APPLICATION_MODULE_ID = (
-    "OpenMolcas_a47aae08-dca8-45fc-8a43-0b396c8ee2a2"
-)
+
 
 
 def _first_nonblank(*values):
@@ -1029,9 +1022,17 @@ class RunViewSet(viewsets.ModelViewSet):
         )
 
     def _submit_single_run(self, request, run, is_tutorial):
-        inputs = {};
+        run_inputs = list(run.inputs.prefetch_related("files"))
+        unstaged_inputs = {
+            item.name: ",".join(file.data_product_uri for file in item.files.all())
+            if item.type == "files" else item.value
+            for item in run_inputs
+        }
+        _validate_utility_run_inputs(build_airavata_input_values(run, unstaged_inputs))
+        app_interface_id = self._get_run_app_interface_id(request, run)
+        inputs = {}
 
-        for input in run.inputs.all():
+        for input in run_inputs:
             if input.type == "files":
                 data_product_uris = []
 
@@ -1049,9 +1050,7 @@ class RunViewSet(viewsets.ModelViewSet):
                 inputs[input.name] = input.value
 
         input_values = build_airavata_input_values(run, inputs)
-        _validate_utility_run_inputs(input_values)
         input_values = _application_input_values(run, input_values)
-        app_interface_id = self._get_run_app_interface_id(request, run)
         execution_options = {}
         if not (
             _uses_dedicated_gaussian_interface(run)
@@ -1430,31 +1429,12 @@ class RunViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def runtime_audit(self, request):
-        app_module_id = getattr(settings, "EPOLYSCAT", {}).get(
-            "EPOLYSCAT_APPLICATION_ID",
-            "ePolyScat_940ab1c9-4ceb-431c-8595-c6246a195442",
-        )
-        errors = []
-
-        def fetch_runtime_data(label, method_name):
-            try:
-                method = getattr(request.airavata_client, method_name)
-                return method(request.authz_token, settings.GATEWAY_ID)
-            except Exception as error:
-                logger.exception("Failed to audit ePolyScat %s", label)
-                errors.append({"section": label, "message": str(error)})
-                return []
-
+        registry = _get_application_registry(request)
+        catalog = _get_application_catalog(request)
+        app_module_id = catalog["EPOLYSCAT"]["EPOLYSCAT_APPLICATION_ID"]
         audit = runtime_audit_domain.audit_runtime_configuration(
             application_module_id=app_module_id,
-            modules=fetch_runtime_data("modules", "getAllAppModules"),
-            interfaces=fetch_runtime_data(
-                "interfaces", "getAllApplicationInterfaces"
-            ),
-            deployments=fetch_runtime_data(
-                "deployments", "getAllApplicationDeployments"
-            ),
-            errors=errors,
+            **registry,
         )
         return Response(audit)
 
@@ -1617,60 +1597,38 @@ class RunViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-    def _get_app_interface_id_for_module(self, request, app_module_id):
-        all_app_interfaces = (
-            request.airavata_client.getAllApplicationInterfaces(
-                request.authz_token,
-                settings.GATEWAY_ID,
-            )
-        )
-        app_interfaces = []
-        for app_interface in all_app_interfaces:
-            if not app_interface.applicationModules:
-                continue
-            if app_module_id in app_interface.applicationModules:
-                app_interfaces.append(app_interface)
-        if len(app_interfaces) == 1:
-            app_interface_id = app_interfaces[0].applicationInterfaceId
-        else:
-            raise Exception(
-                f"Could not figure out the applicationInterfaceId for app module {app_module_id}"
-            )
-        return app_interface_id
+    def _get_run_application(self, request, run):
+        capability = "ePolyScat"
+        if run is not None:
+            if _uses_dedicated_gaussian_interface(run):
+                capability = "Gaussian16"
+            elif _uses_dedicated_openmolcas_interface(run):
+                capability = "OpenMolcas"
+            elif run.run_mode == "utility" or (
+                run.run_mode == "workflow" and _normalize_workflow_stage(run.workflow_stage) == "Analysis"
+            ):
+                capability = run.utility_application or run.workflow_application
+        catalog = _get_application_catalog(request)
+        application = next((item for item in catalog["applications"] if item["id"] == capability), None)
+        if application is None:
+            raise exceptions.ValidationError(f"{capability} is not available in the Airavata application catalog.")
+        return application
 
     def _get_eployscat_app_interface_id(self, request):
-        app_module_id = self._get_run_application_module_id(None)
-        return self._get_app_interface_id_for_module(request, app_module_id)
+        return self._get_run_application(request, None)["interfaceId"]
 
-    def _get_run_application_module_id(self, run):
-        if run is not None and _uses_dedicated_gaussian_interface(run):
-            return getattr(settings, "EPOLYSCAT", {}).get(
-                "GAUSSIAN16_APPLICATION_ID",
-                DEFAULT_GAUSSIAN16_APPLICATION_MODULE_ID,
-            )
-        if run is not None and _uses_dedicated_openmolcas_interface(run):
-            return getattr(settings, "EPOLYSCAT", {}).get(
-                "OPENMOLCAS_APPLICATION_ID",
-                DEFAULT_OPENMOLCAS_APPLICATION_MODULE_ID,
-            )
-        return getattr(settings, "EPOLYSCAT", {}).get(
-            "EPOLYSCAT_APPLICATION_ID",
-            DEFAULT_EPOLYSCAT_APPLICATION_MODULE_ID,
-        )
+    def _get_run_application_module_id(self, request, run):
+        return self._get_run_application(request, run)["moduleId"]
 
     def _get_run_app_interface_id(self, request, run):
-        app_module_id = self._get_run_application_module_id(run)
-        return self._get_app_interface_id_for_module(request, app_module_id)
+        return self._get_run_application(request, run)["interfaceId"]
 
     def _get_run_deployment_executable_path(self, request, run):
-        deployments = request.airavata_client.getAllApplicationDeployments(
-            request.authz_token,
-            settings.GATEWAY_ID,
-        )
+        deployments = _get_application_registry(request)["deployments"]
         try:
             return remote_launch_contract.find_deployment_executable_path(
                 deployments,
-                application_module_id=self._get_run_application_module_id(run),
+                application_module_id=self._get_run_application_module_id(request, run),
                 compute_resource_id=run.compute_resource_id,
             )
         except ValueError as error:
@@ -2242,32 +2200,31 @@ def user_run_file_exists(request, run, filename):
     return data_product_uri
 
 
+class ApplicationDiscoveryUnavailable(exceptions.APIException):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_detail = "Unable to load applications from Airavata. Please try again."
+
+
+def _get_application_registry(request):
+    try:
+        return application_catalog.load_registry(request, settings.GATEWAY_ID)
+    except application_catalog.DiscoveryUnavailable as error:
+        raise ApplicationDiscoveryUnavailable() from error
+
+
+def _get_application_catalog(request):
+    if not hasattr(request, "_epolyscat_application_catalog"):
+        request._epolyscat_application_catalog = application_catalog.build_catalog(
+            **_get_application_registry(request),
+            configured_ids=getattr(settings, "EPOLYSCAT", {}),
+        )
+    return request._epolyscat_application_catalog
+
+
 @api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
 def api_settings(request):
-    epolyscat_settings = getattr(settings, "EPOLYSCAT", {})
-    app_module_id = epolyscat_settings.get(
-        "EPOLYSCAT_APPLICATION_ID",
-        # "BSR:_B-Spline_atomic_R-matrix_code_9ae142cb-689f-4440-8d2d-e131f2891005"
-        #"BSR3_82b15174-04a1-471e-82a3-33c77c8c6281"
-        DEFAULT_EPOLYSCAT_APPLICATION_MODULE_ID,
-    )
-    gaussian_app_module_id = epolyscat_settings.get(
-        "GAUSSIAN16_APPLICATION_ID",
-        DEFAULT_GAUSSIAN16_APPLICATION_MODULE_ID,
-    )
-    openmolcas_app_module_id = epolyscat_settings.get(
-        "OPENMOLCAS_APPLICATION_ID",
-        DEFAULT_OPENMOLCAS_APPLICATION_MODULE_ID,
-    )
-    return response.Response(
-        {
-            "EPOLYSCAT": {
-                "EPOLYSCAT_APPLICATION_ID": app_module_id,
-                "GAUSSIAN16_APPLICATION_ID": gaussian_app_module_id,
-                "OPENMOLCAS_APPLICATION_ID": openmolcas_app_module_id,
-            }
-        }
-    )
+    return response.Response(_get_application_catalog(request))
 
 
 def get_run_output_data_product_uri(request, run: models.Run, data_type: str):
@@ -2902,12 +2859,6 @@ def plotables(request):
     return response.Response({"filenames": plotable_files})
 
 
-@api_view(["GET"])
-def api_settings(request):
-    app_module_id = getattr(settings, "EPOLYSCAT", {}).get(
-        "EPOLYSCAT_APPLICATION_ID", "ePolyScat_940ab1c9-4ceb-431c-8595-c6246a195442"
-    )
-    return response.Response({"EPOLYSCAT": {"EPOLYSCAT_APPLICATION_ID": app_module_id}})
 '''
 
 

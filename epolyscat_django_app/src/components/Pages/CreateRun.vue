@@ -37,6 +37,15 @@
       </header>
 
       <section class="run-type-selector-section">
+        <b-alert v-if="applicationCatalogLoading" show variant="info">Loading applications from Airavata…</b-alert>
+        <b-alert v-else-if="applicationCatalogError" show variant="warning">
+          {{ applicationCatalogError }}
+          <b-button variant="link" @click="loadApplicationCatalog">Retry</b-button>
+        </b-alert>
+        <b-alert v-else-if="applicationCatalogMessage" show variant="warning">{{ applicationCatalogMessage }}</b-alert>
+        <b-alert v-if="applicationCatalogIssues.length" show variant="warning">
+          <div v-for="issue in applicationCatalogIssues" :key="issue">{{ issue }}</div>
+        </b-alert>
         <template v-if="selectedRunType !== 'workflow'">
           <div class="run-type-selection-grid">
             <div class="run-selection-column run-type-column">
@@ -811,13 +820,13 @@
 
       <div class="run-actions-bar">
         <button-overlay :show="processing">
-          <b-button variant="outline-primary" class="run-action-button" :disabled="processing"
-                    v-on:click="onSave(false)">
+          <b-button variant="outline-primary" class="run-action-button"
+                    v-on:click="onSave(false)" :disabled="processing || !applicationSelectionAvailable">
             Save
           </b-button>
         </button-overlay>
         <button-overlay :show="processing">
-          <b-button variant="primary" class="run-action-button" :disabled="processing" v-on:click="onSave(true)">
+          <b-button variant="primary" class="run-action-button" :disabled="processing || !applicationSelectionAvailable" v-on:click="onSave(true)">
             Submit
           </b-button>
         </button-overlay>
@@ -849,6 +858,7 @@ import RunResourceSettings from "@/components/blocks/RunResourceSettings";
 import UserStorage from "@/components/overlay/UserStorage";
 import { descriptions } from "@/fileData";
 import { InputService } from "@/service/epolyscat-service";
+import { applicationSelectionForRun, filterApplicationContracts } from "@/utils/application-catalog";
 import {
   appendEPolyScatSequenceContinuationRow,
   appendEPolyScatSequenceNode,
@@ -912,7 +922,8 @@ export default {
       },
       workflowAnalysisApplications: ["CnvMath"],
       analysisApplicationToAdd: "",
-      runTypeOptions: [
+      applicationInputsInitialized: false,
+      applicationContracts: [
         {
           id: "module",
           label: "Modules",
@@ -1025,7 +1036,7 @@ export default {
                   label: "molden.dat",
                   description: "Molden data file",
                   generatedFileName: "molden.dat",
-                  minimumFileCount: 2,
+                  minimumFileCount: 1,
                   allowsMultiple: true,
                 },
               ],
@@ -1174,6 +1185,34 @@ export default {
     };
   },
   computed: {
+    runTypeOptions() {
+      return filterApplicationContracts(this.applicationContracts, this.$store.state.settings.settings.applications || []);
+    },
+    applicationCatalogLoading() {
+      return this.$store.state.settings.loading;
+    },
+    applicationCatalogError() {
+      return this.$store.state.settings.error;
+    },
+    applicationCatalogIssues() {
+      const issues = this.$store.state.settings.settings.issues || [];
+      const group = this.applicationContracts.find(item => item.id === this.selectedRunType);
+      return issues.filter(issue => this.selectedRunType === "workflow"
+          || group.applications.some(application => issue.startsWith(`${application.id}:`)));
+    },
+    applicationSelectionAvailable() {
+      if (!this.$store.state.settings.loaded || !this.activeExecutionApplication) return false;
+      if (this.selectedRunType === "workflow" && !this.isWorkflowChildEdit) {
+        return this.activeRunTypeApplications.every(stage => stage.localOnly || stage.workflowApplicationIds.length > 0);
+      }
+      return true;
+    },
+    applicationCatalogMessage() {
+      if (!this.$store.state.settings.loaded) return "";
+      if (!this.activeExecutionApplication) return "No registered application is available for this selection. Choose another application or check the Airavata configuration.";
+      if (!this.applicationSelectionAvailable) return "Some workflow stages have no registered application. Check the Airavata configuration before creating this workflow.";
+      return "";
+    },
     pageTitle() {
       if (this.isWorkflowChildEdit) {
         return "Workflow Step";
@@ -1206,7 +1245,6 @@ export default {
     },
     activeRunApplication() {
       return this.activeRunTypeApplications.find(application => application.id === this.selectedApplicationId)
-          || this.activeRunTypeApplications[0]
           || null;
     },
     moduleApplications() {
@@ -1261,9 +1299,10 @@ export default {
 
       return this.activeWorkflowApplications.find(
           application => application.id === this.activeWorkflowApplicationId
-      ) || this.activeWorkflowApplications[0] || this.activeRunApplication;
+      ) || null;
     },
     resourceApplicationModuleId() {
+      if (!this.activeExecutionApplication) return null;
       const epolyscatApplicationModuleId = this.$store.getters[
           "settings/epolyscatApplicationModuleId"
       ];
@@ -1701,6 +1740,27 @@ export default {
     },
   },
   methods: {
+    async loadApplicationCatalog() {
+      const loaded = await this.$store.dispatch("settings/fetchSettings");
+      if (!loaded) return;
+      if (!this.applicationInputsInitialized) {
+        if (!this.cloneRunId && !this.workflowChildRunId) {
+          this.selectedApplicationId = this.activeRunTypeApplications.some(app => app.id === this.selectedApplicationId)
+              ? this.selectedApplicationId : (this.activeRunTypeApplications[0] || {}).id || "";
+          const workflow = this.runTypeOptions.find(group => group.id === "workflow");
+          workflow.applications.forEach(stage => {
+            if (!stage.localOnly && !stage.workflowApplicationIds.includes(this.workflowStageSelections[stage.id])) {
+              this.$set(this.workflowStageSelections, stage.id, stage.workflowApplicationIds[0] || "");
+            }
+          });
+          this.workflowAnalysisApplications = this.utilityApplications.some(app => app.id === "CnvMath")
+              ? ["CnvMath"] : this.utilityApplications.slice(0, 1).map(app => app.id);
+        }
+        await this.initializeInputBinding();
+        await this.refreshData();
+        this.applicationInputsInitialized = true;
+      }
+    },
     selectRunType(runTypeId) {
       this.rememberWorkflowStageSelection();
       this.selectedRunType = runTypeId;
@@ -2766,6 +2826,7 @@ export default {
       });
     },
     async onSave(submit = false) {
+      if (!this.applicationSelectionAvailable) return;
       if (submit) {
         if (!this.validateWorkflowSubmitStep()) return;
       }
@@ -2795,7 +2856,7 @@ export default {
             isWorkflowPlan: this.selectedRunType === "workflow",
             selectedApplication: this.activeExecutionApplication ? this.activeExecutionApplication.id : "",
             requiredFiles: this.activeRequiredFiles.map(file => file.name),
-            dataGenerationApplication: this.workflowStageSelections.Data_Gen || "OpenMolcas",
+            dataGenerationApplication: this.workflowStageSelections.Data_Gen || "",
             analysisApplications: [...this.workflowAnalysisApplications],
             plannedStageIds: ["Data_Gen", "ePolyScat_Run", "Analysis", "Visualization"],
           },
@@ -2905,6 +2966,18 @@ export default {
         const clonedRunId = parseInt(this.cloneRunId);
         const sourceRun = await this.$store.dispatch("run/fetchRun", { runId: clonedRunId });
 
+        // Keep the source application's identity even when it is no longer
+        // discoverable, so cloning cannot silently switch execution targets.
+        const selection = applicationSelectionForRun(sourceRun);
+        this.selectedRunType = selection.runType;
+        this.selectedApplicationId = selection.applicationId;
+        if (selection.stageSelections) {
+          this.workflowStageSelections = selection.stageSelections;
+          this.selectedWorkflowApplicationId = selection.stageSelections[selection.applicationId];
+          this.workflowAnalysisApplications = selection.analysisApplications;
+        }
+        this.applySelectedRunConfiguration({ replaceExisting: false });
+
         await this.$store.dispatch("run/loadInputs", { runId: clonedRunId });
         this.viewIds = sourceRun.isTutorial ? [] : sourceRun.viewIds || [];
         this.run = {
@@ -2977,9 +3050,7 @@ export default {
     this.experimentId = this.experimentIdFromQueryString;
     this.syncGeneratedInpcContent();
 
-    await this.$store.dispatch("settings/fetchSettings");
-    await this.initializeInputBinding();
-    await this.refreshData();
+    await this.loadApplicationCatalog();
   }
 };
 </script>

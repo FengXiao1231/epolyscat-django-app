@@ -34,7 +34,7 @@ UTILITY_CONTRACTS = {
         "executable_name": "MoldenMerge.exe",
         "control_input_names": UTILITY_CONTROL_INPUT_NAMES,
         "data_input_names": ("molden.dat",),
-        "minimum_data_file_count": 2,
+        "minimum_data_file_count": 1,
     },
     "NRFPAD": {
         "executable_name": "NRFPAD.exe",

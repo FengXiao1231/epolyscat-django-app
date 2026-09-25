@@ -38,6 +38,12 @@
 
       <section class="workflow-section">
         <h2>Applications</h2>
+        <b-alert v-if="$store.state.settings.loading" show variant="info">Loading applications from Airavata…</b-alert>
+        <b-alert v-else-if="$store.state.settings.error" show variant="warning">
+          {{ $store.state.settings.error }}
+          <b-button variant="link" @click="$store.dispatch('settings/fetchSettings')">Retry</b-button>
+        </b-alert>
+        <b-alert v-else-if="!applications.length" show variant="warning">No registered application is available for this stage.</b-alert>
         <div class="application-choice-row">
           <button
               v-for="application in applications"
@@ -114,19 +120,19 @@
             :run="run"
             :input-state="inputState"
             :application-module-id="epolyscatApplicationModuleId"
-            application-label="ePolyScat"
+            :application-label="activeApplication.label || 'Application'"
             v-on:updateResources="updateResources"
         />
       </section>
 
       <div class="workflow-actions">
         <button-overlay :show="processing">
-          <b-button variant="outline-primary" :disabled="processing" v-on:click="onSave(false)">
+          <b-button variant="outline-primary" :disabled="processing || !epolyscatApplicationModuleId" v-on:click="onSave(false)">
             Save
           </b-button>
         </button-overlay>
         <button-overlay :show="processing">
-          <b-button variant="primary" :disabled="processing" v-on:click="onSave(true)">
+          <b-button variant="primary" :disabled="processing || !epolyscatApplicationModuleId" v-on:click="onSave(true)">
             Submit
           </b-button>
         </button-overlay>
@@ -176,7 +182,8 @@ export default {
         { id: "Analysis", label: "Post-processing", state: "pending", disabled: true },
         { id: "Visualization", label: "Visualization", state: "pending", disabled: true, localOnly: true },
       ],
-      applications: [
+      applicationContracts: [
+        { id: "ePolyScat", label: "ePolyScat", parameters: [{ name: "epolyscat_input", label: "Input file", kind: "file" }] },
         {
           id: "Gaussian16",
           label: "Gaussian16",
@@ -198,15 +205,22 @@ export default {
     };
   },
   computed: {
+    applications() {
+      const discovered = this.$store.state.settings.settings.applications || [];
+      return this.applicationContracts.filter(application =>
+        (this.activeStageId === "Data_Gen" ? application.id !== "ePolyScat" : application.id === "ePolyScat")
+        && discovered.some(item => item.id === application.id)
+      ).map(application => ({ ...application, ...discovered.find(item => item.id === application.id) }));
+    },
     epolyscatApplicationModuleId() {
-      return this.$store.getters["settings/epolyscatApplicationModuleId"];
+      return this.activeApplication.moduleId || null;
     },
     activeStageLabel() {
       const stage = this.workflowStages.find(stage => stage.id === this.activeStageId);
       return stage ? stage.label : this.activeStageId;
     },
     activeApplication() {
-      return this.applications.find(application => application.id === this.workflowApplication) || this.applications[0];
+      return this.applications.find(application => application.id === this.workflowApplication) || { parameters: [] };
     },
     activeWorkflowInputName() {
       if (this.activeStageId === "Data_Gen") {
@@ -316,6 +330,7 @@ export default {
       return inputs;
     },
     async onSave(submit = false) {
+      if (!this.epolyscatApplicationModuleId) return;
       this.processing = true;
       try {
         let run = await this.$store.dispatch("run/createRun", {
@@ -342,6 +357,13 @@ export default {
         eventBus.$emit("error", { name: `Error while trying to ${submit ? "submit" : "save"} workflow run`, error });
       } finally {
         this.processing = false;
+      }
+    },
+  },
+  watch: {
+    applications(applications) {
+      if (!applications.some(application => application.id === this.workflowApplication)) {
+        this.workflowApplication = applications.length ? applications[0].id : "";
       }
     },
   },
