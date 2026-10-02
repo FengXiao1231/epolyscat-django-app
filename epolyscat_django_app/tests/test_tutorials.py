@@ -724,29 +724,115 @@ class TutorialViewBackendTests(TestCase):
         run.refresh_from_db()
         self.assertEqual(snapshot, (run.name, run.deleted, run.updated, tuple(run.views.values_list('pk', flat=True))))
 
-    def test_key_data_migration_deduplicates_legacy_rows_and_is_repeatable(self):
+    def test_key_migration_preserves_legacy_rows_and_repeat_sync_is_separate(self):
         import importlib
         from django.apps import apps
         migration = importlib.import_module('epolyscat_django_app.migrations.0028_tutorial_keys')
-        first_view = models.View.objects.create(name='Tutorials', type='tutorial', owner=None)
-        second_view = models.View.objects.create(name='Tutorials duplicate', type='tutorial', owner=None)
-        first_run = models.Run.objects.create(name='Test 01', owner=None, filepath='data/epolyscat/manual_tutorials/test01')
-        second_run = models.Run.objects.create(name='Test 01 duplicate', owner=None, filepath=first_run.filepath)
+        first_view = models.View.objects.create(name='Legacy Tutorials', type='tutorial', owner=None)
+        second_view = models.View.objects.create(name='Legacy duplicate', type='tutorial', owner=None)
+        first_run = models.Run.objects.create(name='Legacy Test 01', owner=None, filepath='data/epolyscat/manual_tutorials/test01')
+        second_run = models.Run.objects.create(name='Legacy duplicate', owner=None, filepath=first_run.filepath)
         first_view.runs.add(first_run)
         second_view.runs.add(second_run)
         user_run = models.Run.objects.create(name='Existing user run', owner=self.user, filepath=first_run.filepath)
+        before = list(models.Run.objects.values())
+        before_views = list(models.View.objects.values())
         for _ in range(2):
             migration.assign_tutorial_keys(apps, None)
-        self.assertEqual(models.View.objects.filter(owner=None, type='tutorial').count(), 1)
-        self.assertEqual(models.Run.objects.filter(owner=None, filepath=first_run.filepath).count(), 1)
-        first_view.refresh_from_db()
-        first_run.refresh_from_db()
-        self.assertEqual(first_view.tutorial_key, tutorials.TUTORIAL_VIEW_KEY)
-        self.assertEqual(first_run.tutorial_key, 'epolyscat:manual-tutorial:test01')
-        self.assertTrue(first_run.views.filter(pk=first_view.pk).exists())
-        user_run.refresh_from_db()
-        self.assertEqual(user_run.owner, self.user)
-        self.assertIsNone(user_run.tutorial_key)
-        tutorial_view = tutorials.ensure_tutorial_view()
-        self.assertEqual(tutorial_view.runs.count(), 5)
-        self.assertEqual(tutorials.ensure_tutorial_view().pk, tutorial_view.pk)
+        migration.clear_tutorial_keys(apps, None)
+        self.assertEqual(list(models.Run.objects.values()), before)
+        self.assertEqual(list(models.View.objects.values()), before_views)
+        canonical = tutorials.ensure_tutorial_view()
+        self.assertNotIn(canonical.pk, [first_view.pk, second_view.pk])
+        self.assertEqual(canonical.runs.count(), 5)
+        self.assertEqual(tutorials.ensure_tutorial_view().pk, canonical.pk)
+        self.assertEqual(list(models.Run.objects.filter(pk__in=[first_run.pk,second_run.pk,user_run.pk]).values()), before)
+        self.assertTrue(first_view.runs.filter(pk=first_run.pk).exists())
+        self.assertTrue(second_view.runs.filter(pk=second_run.pk).exists())
+
+    def test_legacy_personal_relations_and_history_are_not_adopted(self):
+        admin = get_user_model().objects.create_user(username='synthetic-legacy-admin')
+        root = models.RunsRoot.objects.create(root='Legacy root',owner=admin)
+        experiment = models.Experiment.objects.create(name='Legacy experiment',description='',owner=admin)
+        view = models.View.objects.create(name='Legacy Tutorials',owner=None,type='tutorial',tutorial_key='epolyscat:manual-tutorials')
+        run = models.Run.objects.create(name='Legacy Test 01',owner=None,root=root,experiment=experiment,filepath='data/epolyscat/manual_tutorials/test01',directory='admin/shared/tutorials',airavata_project_id='legacy-project',inpc_data_product_uri='synthetic-admin-uri',tutorial_key='epolyscat:manual-tutorial:test01',workflow_metadata={'tutorialCaseId':'test01','tutorialStandalone':True})
+        view.runs.add(run)
+        execution = models.RemoteExecution.objects.create(run=run,airavata_experiment_id='legacy-experiment',airavata_experiment_status='COMPLETED')
+        source_input = models.Input.objects.create(run=run,type='files',name='ePolyscat_Input_File')
+        source_file = models.File.objects.create(input=source_input,name='test01.inp',data_product_uri='synthetic-admin-uri')
+        before = models.Run.objects.filter(pk=run.pk).values().get()
+        view_before = models.View.objects.filter(pk=view.pk).values().get()
+        canonical = tutorials.ensure_tutorial_view()
+        self.assertNotEqual(canonical.pk,view.pk)
+        self.assertEqual(models.Run.objects.filter(pk=run.pk).values().get(),before)
+        self.assertEqual(models.View.objects.filter(pk=view.pk).values().get(),view_before)
+        self.assertTrue(view.runs.filter(pk=run.pk).exists())
+        self.assertTrue(models.RemoteExecution.objects.filter(pk=execution.pk).exists())
+        source_file.refresh_from_db()
+        self.assertEqual(source_file.data_product_uri,'synthetic-admin-uri')
+        request = self.authenticated_request('get',f'/runs/{run.pk}/viewables/test01.inp/')
+        with mock.patch('epolyscat_django_app.views.user_storage.open_file') as open_remote:
+            response = views.RunViewSet.as_view({'get':'show_viewable'})(request,pk=run.pk,filename='test01.inp')
+        self.assertEqual(response.status_code,404)
+        open_remote.assert_not_called()
+        admin.delete()
+        canonical.refresh_from_db()
+        self.assertEqual(canonical.runs.count(),5)
+        self.assertEqual(tutorials.ensure_tutorial_view().pk,canonical.pk)
+        response = views.ViewsViewSet.as_view({'get':'tutorials'})(self.authenticated_request('get','/views/tutorials/'))
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(len(response.data['runs']),5)
+        for source in canonical.runs.all():
+            self.assertIsNone(source.owner_id)
+            self.assertIsNone(source.root_id)
+            self.assertIsNone(source.experiment_id)
+            self.assertIsNone(source.airavata_project_id)
+            self.assertEqual(source.directory,'')
+            self.assertFalse(source.executions.exists())
+        source=canonical.runs.get(name='Test 01')
+        preview = views.RunViewSet.as_view({'get':'show_viewable'})(self.authenticated_request('get','/preview/'),pk=source.pk,filename='test01.inp')
+        self.assertEqual(preview.status_code,200)
+        body=b''.join(preview.streaming_content).decode('utf-8')
+        self.assertIn('Convert',body)
+        # This existing end-to-end API clone regression creates a new user run
+        # from package bytes, stores both inputs, and verifies editable ownership.
+        self.test_hydrated_tutorial_clone_is_user_owned_and_editable()
+
+    def test_database_rejects_personal_links_on_packaged_sources(self):
+        canonical=tutorials.ensure_tutorial_view()
+        run=canonical.runs.first()
+        root=models.RunsRoot.objects.create(root='User root',owner=self.user)
+        experiment=models.Experiment.objects.create(name='User experiment',description='',owner=self.user)
+        for attrs in [{'owner':self.user},{'root':root},{'experiment':experiment},{'directory':'personal/path'},{'airavata_project_id':'personal-project'},{'inpc_data_product_uri':'personal-uri'}]:
+            with self.subTest(attrs=attrs),self.assertRaises(IntegrityError),transaction.atomic():
+                models.Run.objects.filter(pk=run.pk).update(**attrs)
+        with self.assertRaises(IntegrityError),transaction.atomic():
+            models.View.objects.filter(pk=canonical.pk).update(owner=self.user)
+
+    def test_missing_catalog_fails_explicitly_without_remote_fallback(self):
+        tutorials.ensure_tutorial_view()
+        with mock.patch.object(tutorials,'load_catalog',side_effect=ValueError('missing packaged artifact')),mock.patch('epolyscat_django_app.views.user_storage.open_file') as open_remote:
+            response=views.ViewsViewSet.as_view({'get':'tutorials'})(self.authenticated_request('get','/views/tutorials/'))
+        self.assertEqual(response.status_code,503)
+        self.assertIn('no personal storage fallback',str(response.data['detail']))
+        open_remote.assert_not_called()
+
+    def test_run_listing_uses_canonical_view_even_when_legacy_view_is_older(self):
+        legacy=models.View.objects.create(name='Older legacy Tutorials',type='tutorial',owner=None)
+        canonical=tutorials.ensure_tutorial_view()
+        self.assertLess(legacy.pk,canonical.pk)
+        response=views.RunViewSet.as_view({'get':'list'})(self.authenticated_request('get',f'/runs/?viewId={canonical.pk}'))
+        self.assertEqual(response.status_code,200)
+        self.assertEqual(len(response.data['results']),5)
+        self.assertTrue(all(row['is_tutorial'] and row['status']=='COMPLETED' for row in response.data['results']))
+
+    def test_packaged_source_rejects_new_execution_without_removing_legacy_history(self):
+        from django.core.exceptions import ValidationError
+        canonical=tutorials.ensure_tutorial_view().runs.first()
+        with self.assertRaises(ValidationError):
+            models.RemoteExecution.objects.create(run=canonical,airavata_experiment_id='forbidden-canonical-execution')
+        self.assertFalse(canonical.executions.exists())
+        legacy=models.Run.objects.create(name='Legacy execution source',owner=None,tutorial_key='epolyscat:manual-tutorial:test01')
+        execution=models.RemoteExecution.objects.create(run=legacy,airavata_experiment_id='retained-legacy-execution')
+        tutorials.ensure_tutorial_view()
+        self.assertTrue(models.RemoteExecution.objects.filter(pk=execution.pk).exists())

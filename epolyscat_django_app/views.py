@@ -468,6 +468,20 @@ def home(request):
     )
 
 
+class TutorialCatalogUnavailable(exceptions.APIException):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_detail = "Packaged tutorial catalog is unavailable; no personal storage fallback is used."
+    default_code = "tutorial_catalog_unavailable"
+
+
+def _shared_packaged_tutorial_view():
+    try:
+        return tutorial_domain.ensure_tutorial_view()
+    except (OSError, KeyError, TypeError, ValueError) as error:
+        logger.warning("Packaged tutorial catalog is unavailable", exc_info=True)
+        raise TutorialCatalogUnavailable() from error
+
+
 class IsOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         # Only the owner has write access
@@ -548,14 +562,8 @@ class RunViewSet(viewsets.ModelViewSet):
         context = super().get_serializer_context()
         if self.action == "list":
             context["refresh_remote_status"] = False
-            context["tutorial_view_id"] = (
-                models.View.objects.filter(
-                    type="tutorial",
-                    owner=None,
-                )
-                .values_list("pk", flat=True)
-                .first()
-            )
+            tutorial_view = models.View.tutorial_view()
+            context["tutorial_view_id"] = tutorial_view.pk if tutorial_view else None
         return context
 
     def get_queryset(self):
@@ -1600,7 +1608,7 @@ class RunViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["GET"])
     def tutorial_runs(self, request):
-        tutorial_view = tutorial_domain.ensure_tutorial_view()
+        tutorial_view = _shared_packaged_tutorial_view()
         runs = tutorial_view.runs.order_by("name").prefetch_related(
             "views",
             Prefetch(
@@ -2343,7 +2351,7 @@ class ViewsViewSet(viewsets.ModelViewSet):
 
     @action(methods=["GET"], detail=False)
     def tutorials(self, request):
-        tutorial_view = tutorial_domain.ensure_tutorial_view()
+        tutorial_view = _shared_packaged_tutorial_view()
         tutorial_view = models.View.objects.prefetch_related(
             Prefetch(
                 "runs",

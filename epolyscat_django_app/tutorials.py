@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import Prefetch
 
 from epolyscat_django_app import models, output_presentation_contracts
+from epolyscat_django_app.tutorial_contract import TUTORIAL_VIEW_KEY, TUTORIAL_RUN_KEY_PREFIX
 
 
 PACKAGE_DIR = Path(__file__).resolve().parent
@@ -29,8 +30,6 @@ REQUIRED_CATALOG_FIELDS = (
     "convert_format",
 )
 ALLOWED_CONVERT_FORMATS = frozenset(("molden", "gaussian", "gamess"))
-TUTORIAL_VIEW_KEY = "epolyscat:manual-tutorials"
-TUTORIAL_RUN_KEY_PREFIX = "epolyscat:manual-tutorial:"
 CATALOG_REVISION = 1
 
 
@@ -195,6 +194,13 @@ def _run_is_current(run, case):
     expected_fields = {
         "tutorial_key": _tutorial_run_key(case["id"]),
         "owner_id": None,
+        "root_id": None,
+        "experiment_id": None,
+        "parent_run_id": None,
+        "workflow_source_run_id": None,
+        "airavata_project_id": None,
+        "inpc_data_product_uri": None,
+        "directory": "",
         "name": case["name"],
         "number": case["id"],
         "description": case["description"],
@@ -210,7 +216,7 @@ def _run_is_current(run, case):
     return all(
         getattr(run, field) == expected
         for field, expected in expected_fields.items()
-    ) and _run_inputs_are_current(run, case)
+    ) and not run.executions.exists() and _run_inputs_are_current(run, case)
 
 
 def _tutorial_view_is_current(tutorial_view, cases):
@@ -304,24 +310,11 @@ def ensure_tutorial_view():
             .first()
         )
         if tutorial_view is None:
-            tutorial_view = (
-                models.View.objects.select_for_update()
-                .filter(type="tutorial", owner=None, tutorial_key=None)
-                .order_by("pk")
-                .first()
+            # Never adopt a legacy view: its membership/history may be personal.
+            tutorial_view, _ = models.View.objects.get_or_create(
+                tutorial_key=TUTORIAL_VIEW_KEY,
+                defaults={"name": "Tutorials", "type": "tutorial", "owner": None},
             )
-            if tutorial_view is not None:
-                tutorial_view.tutorial_key = TUTORIAL_VIEW_KEY
-                tutorial_view.save(update_fields=["tutorial_key", "updated"])
-            else:
-                tutorial_view, _ = models.View.objects.get_or_create(
-                    tutorial_key=TUTORIAL_VIEW_KEY,
-                    defaults={
-                        "name": "Tutorials",
-                        "type": "tutorial",
-                        "owner": None,
-                    },
-                )
 
         tutorial_view = _tutorial_view_queryset(for_update=True).get(
             pk=tutorial_view.pk
@@ -353,19 +346,20 @@ def ensure_tutorial_view():
                 .first()
             )
             if run is None:
-                run = (
-                    models.Run.objects.select_for_update()
-                    .filter(owner=None, filepath=relative_path, tutorial_key=None)
-                    .order_by("pk")
-                    .first()
+                # v2 keys deliberately do not reuse v1 or unkeyed legacy records.
+                run, _ = models.Run.objects.get_or_create(
+                    tutorial_key=tutorial_key,
+                    defaults={"owner": None, "filepath": relative_path},
                 )
-                if run is not None:
-                    run.tutorial_key = tutorial_key
-                else:
-                    run, _ = models.Run.objects.get_or_create(
-                        tutorial_key=tutorial_key,
-                        defaults={"owner": None, "filepath": relative_path},
-                    )
+            if (
+                run.owner_id is not None or run.root_id is not None
+                or run.experiment_id is not None or run.parent_run_id is not None
+                or run.workflow_source_run_id is not None
+                or run.airavata_project_id is not None
+                or run.inpc_data_product_uri is not None or run.directory
+                or run.executions.exists()
+            ):
+                raise ValueError("Packaged tutorial source has personal or execution associations")
 
             run.owner = None
             run.filepath = relative_path
@@ -406,10 +400,13 @@ def case_for_run(run):
     if run.owner_id is not None or not run.views.filter(
         type="tutorial",
         owner=None,
+        tutorial_key=TUTORIAL_VIEW_KEY,
     ).exists():
-        raise FileNotFoundError("Run is not a shared tutorial")
+        raise FileNotFoundError("Run is not a packaged tutorial")
 
     case_id = (run.workflow_metadata or {}).get("tutorialCaseId")
+    if run.tutorial_key != _tutorial_run_key(case_id):
+        raise FileNotFoundError("Run is not a canonical packaged tutorial")
     try:
         catalog = load_catalog()
     except (OSError, KeyError, TypeError, ValueError) as exc:
