@@ -130,22 +130,23 @@ class View(models.Model):
     type = models.CharField(
         max_length=20, default="user-defined", choices=VIEW_TYPE_CHOICES
     )
+    tutorial_key = models.CharField(
+        max_length=80,
+        null=True,
+        blank=True,
+        unique=True,
+        editable=False,
+    )
     deleted = models.BooleanField(default=False)
     order = models.IntegerField(default=0)
 
     @property
     def is_tutorial(self):
-        return Run.check_is_tutorial(self.id)
-        
-        #return self.name == "Tutorials" and self.owner.username == "tom_wolcott"
+        return self.type == "tutorial" and self.owner_id is None
 
+    @staticmethod
     def tutorial_view():
-        tutorial_views = [view for view in View.objects.all() if view.is_tutorial]
-
-        if len(tutorial_views) == 0:
-            return None
-        else:
-            return tutorial_views[0]
+        return View.objects.filter(type="tutorial", owner=None).order_by("pk").first()
 
     @staticmethod
     def filter_by_user(request):
@@ -208,6 +209,13 @@ class Run(models.Model):
         Experiment, on_delete=models.CASCADE, related_name="runs", null=True, blank=True
     )
     filepath = models.CharField(max_length=255, blank=True, default="")
+    tutorial_key = models.CharField(
+        max_length=80,
+        null=True,
+        blank=True,
+        unique=True,
+        editable=False,
+    )
     inpc_data_product_uri = models.CharField(max_length=64, null=True, default=None)
 
     created = models.DateTimeField(auto_now_add=True)
@@ -278,13 +286,9 @@ class Run(models.Model):
     def is_tutorial(self):
         return Run.check_is_tutorial(self.id)
 
+    @staticmethod
     def tutorial_view():
-        tutorial_views = [view for view in View.objects.all() if view.is_tutorial]
-
-        if len(tutorial_views) == 0:
-            return None
-        else:
-            return tutorial_views[0]
+        return View.tutorial_view()
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -335,11 +339,11 @@ class Run(models.Model):
 
     @staticmethod
     def check_is_tutorial(run_id):
-        try:
-            tutorials_view = View.objects.get(type="tutorial", owner=None)
-            return tutorials_view.runs.filter(pk=run_id).exists()
-        except View.DoesNotExist:
-            return False
+        return View.objects.filter(
+            type="tutorial",
+            owner=None,
+            runs__pk=run_id,
+        ).exists()
 
     def get_most_recent_job_id(self, request):
         job_id = None
